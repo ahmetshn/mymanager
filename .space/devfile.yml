@@ -1,4 +1,9 @@
 schemaVersion: 2.2.0
 attributes:
   space:
-    projectRoot: src/WebApplication1.sln
+    editor:
+      type: Rider
+      version: '2022.1'
+    # projectRoot is specified
+    # relative to repository root
+    projectRoot: projects/WebApplication1/WebApplication1.sln
