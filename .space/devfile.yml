@@ -4,4 +4,4 @@ attributes:
     editor:
       type: Rider
       version: '2022.1'
-    projectRoot: src/MySolution.sln
+    projectRoot: src/WebApplication1.sln
