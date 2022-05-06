@@ -1,0 +1,7 @@
+schemaVersion: 2.2.0
+attributes:
+  space:
+    editor:
+      type: Rider
+      version: '2022.1'
+    projectRoot: src/MySolution.sln
