@@ -7,3 +7,4 @@ attributes:
     # projectRoot is specified
     # relative to repository root
     projectRoot: projects/WebApplication1/WebApplication1.sln
+    updateChannel: Release
