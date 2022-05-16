@@ -52,7 +52,7 @@
             background-color: transparent;
             width: 100%;
             height: 100vh;
-            background: gray;
+            background: white;
         }
 
             .design-surface canvas {
@@ -61,16 +61,16 @@
                 padding: 0;
                 width: 100%;
                 height: 100vh;
+                background-color: transparent;
+                border: 1px solid red;
             }
 
                 .design-surface canvas:first-child {
-
-                    background-color: lightgoldenrodyellow;
+                    z-index: 5
                 }
 
                 .design-surface canvas:last-child {
-                    background-color: aqua;
-                    position: static;
+                    z-index: 15;
                 }
     </style>
 

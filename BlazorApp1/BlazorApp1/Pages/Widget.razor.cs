@@ -22,10 +22,11 @@ namespace BlazorApp1.Pages
 
         private ElementReference _container;
         private Canvas _tempCanvas;
-        //private Canvas _mainCanvas;
+        private Canvas _mainCanvas;
 
         private Context2D _tempContext;
-        //private Context2D _mainContext;
+        private Context2D _mainContext;
+        private Context2D _activeContext;
 
         private double canvasx;
         private double canvasy;
@@ -41,13 +42,35 @@ namespace BlazorApp1.Pages
         private string _width;
         private string _height;
 
-        private string _tool = "rectangle";
+        private string _tool;
 
         private Position _position;
 
         private bool render_required = true;
 
-       
+        private bool _transfer;
+
+        private bool _showLineWidth;
+        private bool _showLineColor;
+        private bool _showFillColor;
+
+        private double _globalAlpha;
+        private double _lineWidth;
+        private string _lineColor;
+        private string _fillColor;
+
+        protected override void OnInitialized()
+        {
+            _showLineWidth = true;
+            _showLineColor = true;
+            _showFillColor = false;
+            _tool = "pencil";
+
+            _globalAlpha = 1;
+            _lineWidth = 1;
+            _lineColor = "black";
+            _fillColor = string.Empty;
+        }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -64,7 +87,9 @@ namespace BlazorApp1.Pages
                 (canvasx, canvasy) = (_position.Left, _position.Top);
 
                 _tempContext = await _tempCanvas.GetContext2DAsync(true);
-                //_mainContext = await _mainCanvas.GetContext2DAsync(true);
+                _mainContext = await _mainCanvas.GetContext2DAsync(true);
+
+
 
                 // initialize settings
                 await _tempContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
@@ -73,13 +98,14 @@ namespace BlazorApp1.Pages
                 await _tempContext.LineJoinAsync(LineJoin.Round);
                 await _tempContext.LineCapAsync(LineCap.Round);
 
-                //await _mainContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
-                //await _mainContext.StrokeStyleAsync(clr);
-                //await _mainContext.LineWidthAsync(3);
-                //await _mainContext.LineJoinAsync(LineJoin.Round);
-                //await _mainContext.LineCapAsync(LineCap.Round);
+                await _mainContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
+                await _mainContext.StrokeStyleAsync(clr);
+                await _mainContext.LineWidthAsync(3);
+                await _mainContext.LineJoinAsync(LineJoin.Round);
+                await _mainContext.LineCapAsync(LineCap.Round);
                 // this retrieves the top left corner of the canvas container (which is equivalent to the top left corner of the canvas, as we don't have any margins / padding)
 
+                _activeContext = _mainContext;
             }
         }
 
@@ -139,6 +165,14 @@ namespace BlazorApp1.Pages
 
             last_mousex = 0;
             last_mousey = 0;
+
+            if (_transfer)
+            {
+                if (_tool == "line")
+                {
+                    // Kalınlık ve renk ayarlarınından sonra bu kısıım yapılacak
+                }
+            }
         }
 
         async Task MouseMoveCanvasAsync(MouseEventArgs e)
@@ -162,13 +196,43 @@ namespace BlazorApp1.Pages
 
                 Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
 
-                await using (var ctx2 = _tempContext.CreateBatch())
+                await using (var context = _activeContext.CreateBatch())
                 {
-                    await ctx2.BeginPathAsync();
-                    await ctx2.StrokeStyleAsync("red");
-                    await ctx2.MoveToAsync(mousex, mousey);
-                    await ctx2.LineToAsync(last_mousex, last_mousey);
-                    await ctx2.StrokeAsync();
+                    await context.LineWidthAsync(_lineWidth);
+                    await context.StrokeStyleAsync(_lineColor);
+                    await context.GlobalAlphaAsync(_globalAlpha);
+
+                    await context.BeginPathAsync();
+                    await context.StrokeStyleAsync(_lineColor);
+                    await context.MoveToAsync(mousex, mousey);
+                    await context.LineToAsync(last_mousex, last_mousey);
+                    await context.StrokeAsync();
+                }
+
+                last_mousex = mousex;
+                last_mousey = mousey;
+            }
+            else if (_tool == "marker")
+            {
+                mousex = e.ClientX - canvasx;
+                mousey = e.ClientY - canvasy;
+
+                //Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
+
+                await using (var context = _activeContext.CreateBatch())
+                {
+                    await context.LineWidthAsync(_lineWidth);
+                    await context.StrokeStyleAsync(_lineColor);
+
+                    await context.LineStyles.LineCapAsync(LineCap.Round);
+                    await context.LineStyles.LineJoinAsync(LineJoin.Round);
+
+                    await context.GlobalAlphaAsync(0.1);
+
+                    await context.BeginPathAsync();
+                    await context.MoveToAsync(mousex, mousey);
+                    await context.LineToAsync(last_mousex, last_mousey);
+                    await context.StrokeAsync();
                 }
 
                 last_mousex = mousex;
@@ -182,7 +246,7 @@ namespace BlazorApp1.Pages
                 double with = last_mousex - start_mousex;
                 double height = last_mousey - start_mousey;
 
-                await using (var ctx2 = _tempContext.CreateBatch())
+                await using (var ctx2 = _activeContext.CreateBatch())
                 {
                     await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
                     await ctx2.StrokeStyleAsync("red");
@@ -201,7 +265,7 @@ namespace BlazorApp1.Pages
 
 
 
-                await using (var ctx2 = _tempContext.CreateBatch())
+                await using (var ctx2 = _activeContext.CreateBatch())
                 {
 
                     await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
@@ -226,7 +290,7 @@ namespace BlazorApp1.Pages
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
-                await using (var ctx2 = _tempContext.CreateBatch())
+                await using (var ctx2 = _activeContext.CreateBatch())
                 {
                     //var mx = point[0];
                     //var my = point[1];
@@ -323,7 +387,7 @@ namespace BlazorApp1.Pages
                 string color = string.Empty;
                 color = GetColor(color);
 
-                await using (var context = _tempContext.CreateBatch())
+                await using (var context = _activeContext.CreateBatch())
                 {
                     //var mx = point[0];
                     //var my = point[1];
@@ -371,36 +435,7 @@ namespace BlazorApp1.Pages
                     await context.StrokeAsync();
                 }
             }
-            else if (_tool == "marker")
-            {
-                mousex = e.ClientX - canvasx;
-                mousey = e.ClientY - canvasy;
-                //await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
 
-                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-
-                await using (var ctx2 = _tempContext.CreateBatch())
-                {
-                    await ctx2.LineStyles.LineCapAsync(LineCap.Round);
-                    await ctx2.LineStyles.LineJoinAsync(LineJoin.Round);
-                    await ctx2.LineStyles.LineWidthAsync(50);
-
-                    await ctx2.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
-                    await ctx2.GlobalAlphaAsync(0.1);
-                    int _radius = 150;
-                    //await ctx2.StrokeStyleAsync(0, 0, _radius * 0.95, 0, 0, _radius * 1.05, (0.0, "#333"), (0.5, "white"), (1, "#333"));
-
-                    await ctx2.StrokeStyleAsync("yellow");
-
-                    await ctx2.BeginPathAsync();
-                    await ctx2.MoveToAsync(mousex, mousey);
-                    await ctx2.LineToAsync(last_mousex, last_mousey);
-                    await ctx2.StrokeAsync();
-                }
-
-                last_mousex = mousex;
-                last_mousey = mousey;
-            }
             else if (_tool == "eraser")
             {
                 //mousex = e.ClientX - canvasx;
@@ -411,7 +446,7 @@ namespace BlazorApp1.Pages
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
-                await using (var ctx2 = _tempContext.CreateBatch())
+                await using (var ctx2 = _activeContext.CreateBatch())
                 {
                     await ctx2.StrokeStyleAsync("white");
                     await ctx2.BeginPathAsync();
@@ -423,6 +458,8 @@ namespace BlazorApp1.Pages
                 }
             }
         }
+
+
 
         private string GetColor(string color)
         {
@@ -445,9 +482,32 @@ namespace BlazorApp1.Pages
         }
 
 
-        private async Task ChangeTool(string tool)
+        private async Task ChangeTool(string tool, bool transfer, bool showLineWidth, bool showLineColor, bool showFillColor)
         {
             _tool = tool;
+            _showLineWidth = showLineWidth;
+            _showLineColor = showLineColor;
+            _showFillColor = showFillColor;
+
+            if (tool == "line" || tool == "arrow" || tool == "rectangle")
+            {
+                _mainCanvas.AdditionalAttributes["style"] = "z-index:5;";
+                _tempCanvas.AdditionalAttributes["style"] = "z-index:15;";
+
+                _activeContext = _tempContext;
+            }
+            else
+            {
+                _mainCanvas.AdditionalAttributes["style"] = "z-index:15;";
+                _tempCanvas.AdditionalAttributes["style"] = "z-index:5;";
+
+                _activeContext = _mainContext;
+            }
+        }
+
+        private async Task ChangeLineWidht(double lineWidth)
+        {
+            _lineWidth = lineWidth;
         }
     }
 }
