@@ -11,12 +11,21 @@ namespace BlazorApp1.Pages
         [Inject]
         public IJSRuntime JS { get; set; }
 
+        private class Position
+        {
+            public double Left { get; set; }
+            public double Top { get; set; }
+            public double Width { get; set; }
+            public double Height { get; set; }
+        }
+
+
         private ElementReference _container;
         private Canvas _tempCanvas;
-        private Canvas _mainCanvas;
+        //private Canvas _mainCanvas;
 
         private Context2D _tempContext;
-        private Context2D _mainContext;
+        //private Context2D _mainContext;
 
         private double canvasx;
         private double canvasy;
@@ -32,22 +41,30 @@ namespace BlazorApp1.Pages
         private string _width;
         private string _height;
 
-        private string _tool;
+        private string _tool = "rectangle";
+
+        private Position _position;
 
         private bool render_required = true;
 
-        private class Position
-        {
-            public double Left { get; set; }
-            public double Top { get; set; }
-        }
+       
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
+                object[] objects = new object[1];
+                object obj = $"let e = document.querySelector('[_bl_{_container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y, 'Width':e.width,'Height':e.height  }}; e";
+                objects[0] = obj;
+
+                _position = await JS.InvokeAsync<Position>("eval", objects);
+                _width = _position.Width.ToString("N0").Replace(",", string.Empty).Replace(".", string.Empty);
+                _height = _position.Height.ToString("N0").Replace(",", string.Empty).Replace(".", string.Empty);
+
+                (canvasx, canvasy) = (_position.Left, _position.Top);
+
                 _tempContext = await _tempCanvas.GetContext2DAsync(true);
-                _mainContext = await _mainCanvas.GetContext2DAsync(true);
+                //_mainContext = await _mainCanvas.GetContext2DAsync(true);
 
                 // initialize settings
                 await _tempContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
@@ -56,22 +73,13 @@ namespace BlazorApp1.Pages
                 await _tempContext.LineJoinAsync(LineJoin.Round);
                 await _tempContext.LineCapAsync(LineCap.Round);
 
-                await _mainContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
-                await _mainContext.StrokeStyleAsync(clr);
-                await _mainContext.LineWidthAsync(3);
-                await _mainContext.LineJoinAsync(LineJoin.Round);
-                await _mainContext.LineCapAsync(LineCap.Round);
+                //await _mainContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
+                //await _mainContext.StrokeStyleAsync(clr);
+                //await _mainContext.LineWidthAsync(3);
+                //await _mainContext.LineJoinAsync(LineJoin.Round);
+                //await _mainContext.LineCapAsync(LineCap.Round);
                 // this retrieves the top left corner of the canvas container (which is equivalent to the top left corner of the canvas, as we don't have any margins / padding)
 
-                object[] objects = new object[1];
-                object obj = $"let e = document.querySelector('[_bl_{_container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e";
-                objects[0] = obj;
-
-                var p = await JS.InvokeAsync<Position>("eval", objects);
-
-                (canvasx, canvasy) = (p.Left, p.Top);
-
-                _tool = "pencil";
             }
         }
 
@@ -176,7 +184,7 @@ namespace BlazorApp1.Pages
 
                 await using (var ctx2 = _tempContext.CreateBatch())
                 {
-                    await ctx2.ClearRectAsync(0, 0, 800, 800);
+                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
                     await ctx2.StrokeStyleAsync("red");
                     await ctx2.StrokeRectAsync(start_mousex, start_mousey, with, height);
                 }
@@ -196,7 +204,7 @@ namespace BlazorApp1.Pages
                 await using (var ctx2 = _tempContext.CreateBatch())
                 {
 
-                    await ctx2.ClearRectAsync(0, 0, 800, 800);
+                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
                     await ctx2.BeginPathAsync();
                     await ctx2.MoveToAsync(mousex, mousey);
                     await ctx2.LineWidthAsync(20);
@@ -256,7 +264,7 @@ namespace BlazorApp1.Pages
 
                     var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
 
-                    await ctx2.ClearRectAsync(0, 0, 800, 800);
+                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
                     await ctx2.BeginPathAsync();
                     await ctx2.MoveToAsync(mousex, mousey);
                     await ctx2.LineWidthAsync(arrowSize);
@@ -335,7 +343,7 @@ namespace BlazorApp1.Pages
                     await context.LineJoinAsync(LineJoin.Round);
 
                     var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
-                    await context.ClearRectAsync(0, 0, 800, 800);
+                    await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
                     await context.BeginPathAsync();
                     await context.MoveToAsync(mousex, mousey);
@@ -363,7 +371,7 @@ namespace BlazorApp1.Pages
                     await context.StrokeAsync();
                 }
             }
-            else if (_tool == "maker")
+            else if (_tool == "marker")
             {
                 mousex = e.ClientX - canvasx;
                 mousey = e.ClientY - canvasy;
@@ -436,5 +444,10 @@ namespace BlazorApp1.Pages
             return colors.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
         }
 
+
+        private async Task ChangeTool(string tool)
+        {
+            _tool = tool;
+        }
     }
 }
