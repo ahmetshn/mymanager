@@ -238,6 +238,30 @@ namespace BlazorApp1.Pages
                 last_mousex = mousex;
                 last_mousey = mousey;
             }
+            else if (_tool == "eraser")
+            {
+                mousex = e.ClientX - canvasx;
+                mousey = e.ClientY - canvasy;
+                //await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
+
+                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
+
+                await using (var context = _activeContext.CreateBatch())
+                {
+                    await context.LineWidthAsync(_lineWidth);
+                    await context.StrokeStyleAsync(_lineColor);
+                    await context.GlobalAlphaAsync(_globalAlpha);
+
+                    await context.BeginPathAsync();
+                    await context.StrokeStyleAsync("white");
+                    await context.MoveToAsync(mousex, mousey);
+                    await context.LineToAsync(last_mousex, last_mousey);
+                    await context.StrokeAsync();
+                }
+
+                last_mousex = mousex;
+                last_mousey = mousey;
+            }
             else if (_tool == "rectangle")
             {
                 last_mousex = clientX - canvasx;
@@ -489,25 +513,37 @@ namespace BlazorApp1.Pages
             _showLineColor = showLineColor;
             _showFillColor = showFillColor;
 
-            if (tool == "line" || tool == "arrow" || tool == "rectangle")
+            _mainCanvas.AdditionalAttributes.Remove("style");
+            _tempCanvas.AdditionalAttributes.Remove("style");
+
+            //if (tool == "line" || tool == "arrow" || tool == "rectangle")
+
+            if (transfer)
             {
-                _mainCanvas.AdditionalAttributes["style"] = "z-index:5;";
-                _tempCanvas.AdditionalAttributes["style"] = "z-index:15;";
+                _mainCanvas.AdditionalAttributes.Add("style", "z-index:5;");
+                _tempCanvas.AdditionalAttributes.Add("style", "z-index:15;");
 
                 _activeContext = _tempContext;
             }
             else
             {
-                _mainCanvas.AdditionalAttributes["style"] = "z-index:15;";
-                _tempCanvas.AdditionalAttributes["style"] = "z-index:5;";
+                _mainCanvas.AdditionalAttributes.Add("style", "z-index:15;");
+                _tempCanvas.AdditionalAttributes.Add("style", "z-index:5;");
 
                 _activeContext = _mainContext;
             }
+
+            StateHasChanged();
         }
 
         private async Task ChangeLineWidht(double lineWidth)
         {
             _lineWidth = lineWidth;
+        }
+
+        private async Task ChangeLineColor(string lineColor)
+        {
+            _lineColor = '#' + lineColor;
         }
     }
 }
