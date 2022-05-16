@@ -1,0 +1,23 @@
+﻿@page "/"
+
+@using Microsoft.JSInterop
+@inject IJSRuntime js
+
+<button @onclick="ToggleColorAsync" style="color:@clr">Toggle color between black and red</button>
+
+<button type="button" @onclick="@(e => ChangeTool("pencil"))">Kalem</button>
+<button type="button" @onclick="@(e => ChangeTool("rectangle"))">Dikdörtgen</button>
+<button type="button" @onclick="@(e => ChangeTool("line"))">Çizgi</button>
+<button type="button" @onclick="@(e => ChangeTool("arrow"))">OK</button>
+<button type="button" @onclick="@(e => ChangeTool("maker"))">İşaretle Kalemi</button>
+<button type="button" @onclick="@(e => ChangeTool("eraser"))">Silgi</button>
+
+<div @ref="container">
+    <Canvas @onmousemove="MouseMoveCanvasAsync"
+            @onmouseup="MouseUpCanvas"
+            @onmousedown="MouseDownCanvas"
+            width="@_width"
+            height="@_height"
+            @ref="_context"
+            style="border: 1px solid red"></Canvas>
+</div>
