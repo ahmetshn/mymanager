@@ -120,7 +120,6 @@ namespace BlazorApp1.Pages
             return base.ShouldRender();
         }
 
-
         private void MouseDownCanvas(MouseEventArgs e)
         {
             var clientX = e.ClientX;
@@ -158,24 +157,51 @@ namespace BlazorApp1.Pages
             //this.mousedown = true;
         }
 
-        private void MouseUpCanvas(MouseEventArgs e)
+        private async Task MouseUpCanvas(MouseEventArgs e)
         {
             render_required = false;
             mousedown = false;
 
-            last_mousex = 0;
-            last_mousey = 0;
+
+
+            Console.WriteLine("-----------------------------");
+            Console.WriteLine(string.Format("transfer={0} _tool= {1}", _transfer, _tool));
 
             if (_transfer)
             {
                 if (_tool == "line")
                 {
+
                     // Kalınlık ve renk ayarlarınından sonra bu kısıım yapılacak
+
+                    Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
+                    //last_mousex = clientX - canvasx;
+                    //last_mousey = clientY - canvasy;
+
+                    await using (var context = _mainContext.CreateBatch())
+                    {
+                        await context.LineWidthAsync(_lineWidth);
+                        await context.StrokeStyleAsync(_lineColor);
+                        await context.GlobalAlphaAsync(_globalAlpha);
+
+                        await context.BeginPathAsync();
+                        await context.MoveToAsync(mousex, mousey);
+                        await context.LineToAsync(last_mousex, last_mousey);
+                        await context.StrokeAsync();
+                    }
+
+                    await using (var context = _tempContext.CreateBatch())
+                    {
+                        await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                    }
                 }
             }
+
+            last_mousex = 0;
+            last_mousey = 0;
         }
 
-        async Task MouseMoveCanvasAsync(MouseEventArgs e)
+        private async Task MouseMoveCanvasAsync(MouseEventArgs e)
         {
             render_required = false;
             if (!mousedown)
@@ -262,21 +288,6 @@ namespace BlazorApp1.Pages
                 last_mousex = mousex;
                 last_mousey = mousey;
             }
-            else if (_tool == "rectangle")
-            {
-                last_mousex = clientX - canvasx;
-                last_mousey = clientY - canvasy;
-
-                double with = last_mousex - start_mousex;
-                double height = last_mousey - start_mousey;
-
-                await using (var ctx2 = _activeContext.CreateBatch())
-                {
-                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                    await ctx2.StrokeStyleAsync("red");
-                    await ctx2.StrokeRectAsync(start_mousex, start_mousey, with, height);
-                }
-            }
             else if (_tool == "line")
             {
                 //mousex = e.ClientX - canvasx;
@@ -287,113 +298,17 @@ namespace BlazorApp1.Pages
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
-
-
-                await using (var ctx2 = _activeContext.CreateBatch())
+                await using (var context = _activeContext.CreateBatch())
                 {
+                    await context.LineWidthAsync(_lineWidth);
+                    await context.StrokeStyleAsync(_lineColor);
+                    await context.GlobalAlphaAsync(_globalAlpha);
 
-                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                    await ctx2.BeginPathAsync();
-                    await ctx2.MoveToAsync(mousex, mousey);
-                    await ctx2.LineWidthAsync(20);
-                    await ctx2.LineToAsync(last_mousex, last_mousey);
-                    // await ctx2.LineToAsync(100, 200);
-                    await ctx2.StrokeAsync();
-                }
-
-                //last_mousex = mousex;
-                //last_mousey = mousey;
-            }
-            else if (_tool == "arrowz")
-            {
-                //mousex = e.ClientX - canvasx;
-                //mousey = e.ClientY - canvasy;
-                //await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
-
-                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-                last_mousex = clientX - canvasx;
-                last_mousey = clientY - canvasy;
-
-                await using (var ctx2 = _activeContext.CreateBatch())
-                {
-                    //var mx = point[0];
-                    //var my = point[1];
-
-                    //var lx = point[2];
-                    //var ly = point[3];
-
-                    //var arrowSize = arrowHandler.arrowSize;
-
-                    //if (arrowSize == 10)
-                    //{
-                    //    arrowSize = (options ? options[0] : lineWidth) * 5;
-                    //}
-
-                    //var angle = Math.atan2(ly - my, lx - mx);
-
-                    //context.beginPath();
-                    //context.moveTo(mx, my);
-                    //context.lineTo(lx, ly);
-
-                    //this.handleOptions(context, options);
-
-                    //context.beginPath();
-                    //context.moveTo(lx, ly);
-                    //context.lineTo(lx - arrowSize * Math.cos(angle - Math.PI / 7), ly - arrowSize * Math.sin(angle - Math.PI / 7));
-                    //context.lineTo(lx - arrowSize * Math.cos(angle + Math.PI / 7), ly - arrowSize * Math.sin(angle + Math.PI / 7));
-                    //context.lineTo(lx, ly);
-                    //context.lineTo(lx - arrowSize * Math.cos(angle - Math.PI / 7), ly - arrowSize * Math.sin(angle - Math.PI / 7));
-
-                    //this.handleOptions(context, options);
-
-                    string color = string.Empty;
-
-                    var arrowSize = 25;
-
-                    var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
-
-                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                    await ctx2.BeginPathAsync();
-                    await ctx2.MoveToAsync(mousex, mousey);
-                    await ctx2.LineWidthAsync(arrowSize);
-                    await ctx2.LineCapAsync(LineCap.Square);
-                    await ctx2.LineJoinAsync(LineJoin.Miter);
-
-                    color = "yellow";
-                    await ctx2.StrokeStyleAsync(color);
-                    Console.WriteLine(color);
-                    await ctx2.LineToAsync(last_mousex, last_mousey);
-                    await ctx2.StrokeAsync();
-
-                    //context.lineTo(lx - arrowSize * Math.cos(angle - Math.PI / 7), ly - arrowSize * Math.sin(angle - Math.PI / 7));
-                    color = "red";
-                    await ctx2.StrokeStyleAsync(color);
-                    Console.WriteLine(color);
-                    await ctx2.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-                    await ctx2.StrokeAsync();
-                    return;
-
-
-                    //context.lineTo(lx - arrowSize * Math.cos(angle + Math.PI / 7), ly - arrowSize * Math.sin(angle + Math.PI / 7));
-                    color = "aqua";
-                    await ctx2.StrokeStyleAsync(color);
-                    Console.WriteLine(color);
-                    await ctx2.LineToAsync(last_mousex - arrowSize * Math.Cos(angle + Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle + Math.PI / 7));
-                    await ctx2.StrokeAsync();
-                    return;
-
-                    color = GetColor(color);
-                    await ctx2.StrokeStyleAsync(color);
-                    Console.WriteLine(color);
-                    await ctx2.LineToAsync(last_mousex, last_mousey);
-                    //context.lineTo(lx - arrowSize * Math.cos(angle - Math.PI / 7), ly - arrowSize * Math.sin(angle - Math.PI / 7));
-                    await ctx2.StrokeAsync();
-
-                    color = GetColor(color);
-                    await ctx2.StrokeStyleAsync(color);
-                    Console.WriteLine(color);
-                    await ctx2.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-                    await ctx2.StrokeAsync();
+                    await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                    await context.BeginPathAsync();
+                    await context.MoveToAsync(mousex, mousey);
+                    await context.LineToAsync(last_mousex, last_mousey);
+                    await context.StrokeAsync();
                 }
 
                 //last_mousex = mousex;
@@ -460,6 +375,24 @@ namespace BlazorApp1.Pages
                 }
             }
 
+            else if (_tool == "rectangle")
+            {
+                last_mousex = clientX - canvasx;
+                last_mousey = clientY - canvasy;
+
+                double with = last_mousex - start_mousex;
+                double height = last_mousey - start_mousey;
+
+                await using (var ctx2 = _activeContext.CreateBatch())
+                {
+                    await ctx2.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                    await ctx2.StrokeStyleAsync("red");
+                    await ctx2.StrokeRectAsync(start_mousex, start_mousey, with, height);
+                }
+            }
+
+
+
             else if (_tool == "eraser")
             {
                 //mousex = e.ClientX - canvasx;
@@ -509,6 +442,7 @@ namespace BlazorApp1.Pages
         private async Task ChangeTool(string tool, bool transfer, bool showLineWidth, bool showLineColor, bool showFillColor)
         {
             _tool = tool;
+            _transfer = transfer;
             _showLineWidth = showLineWidth;
             _showLineColor = showLineColor;
             _showFillColor = showFillColor;
