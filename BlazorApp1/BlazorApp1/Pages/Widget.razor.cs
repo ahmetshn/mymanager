@@ -19,6 +19,7 @@ namespace BlazorApp1.Pages
             public double Height { get; set; }
         }
 
+        private IList<IList<DrawPoint>> _allPoints;
         private IList<DrawPoint> _points;
         private ElementReference _container;
         private Canvas _tempCanvas;
@@ -61,6 +62,10 @@ namespace BlazorApp1.Pages
         private LineCap _lineCap { get; set; }
         private LineJoin _lineJoin { get; set; }
 
+        private System.Timers.Timer _timer;
+        private long _tick;
+        //private PeriodicTimer _timer { get; set; }
+
         protected override void OnInitialized()
         {
             _showLineWidth = true;
@@ -75,7 +80,24 @@ namespace BlazorApp1.Pages
             _lineCap = LineCap.Round;
             _lineJoin = LineJoin.Miter;
 
-            _points = new List<DrawPoint>();
+            _allPoints = new List<IList<DrawPoint>>();
+
+            _timer = new System.Timers.Timer();
+            _timer.Interval = 1;
+            _timer.Elapsed += OnTimedEvent;
+            _timer.AutoReset = true;
+
+
+            DateTime dateTime = DateTime.Now;
+            _tick = 0;
+        }
+
+        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            _tick++;
+            Console.WriteLine(" Ticks  : {0} ", _tick);
+            //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
+            //Console.WriteLine(" Event  : {0} ", e.SignalTime);
         }
 
         private async Task Set(Batch2D context, DrawPoint drawPoint)
@@ -90,6 +112,7 @@ namespace BlazorApp1.Pages
         private DrawPoint GetDrawPoint()
         {
             DrawPoint drawPoint = new DrawPoint();
+            drawPoint.Tick = _tick;
             drawPoint.Tool = _tool;
             drawPoint.StartX = mousex;
             drawPoint.StartY = mousey;
@@ -164,6 +187,8 @@ namespace BlazorApp1.Pages
             start_mousey = clientY - canvasy;
 
             this.mousedown = true;
+
+            _points = new List<DrawPoint>();
         }
 
         private async Task MouseUpCanvas(MouseEventArgs e)
@@ -209,6 +234,9 @@ namespace BlazorApp1.Pages
 
             last_mousex = 0;
             last_mousey = 0;
+
+            _allPoints.Add(_points);
+            _points = null;
         }
 
         private async Task MouseMoveCanvasAsync(MouseEventArgs e)
@@ -313,10 +341,10 @@ namespace BlazorApp1.Pages
         {
             if (tool == "undo")
             {
-                if (_points.Count > 0)
-                    _points.RemoveAt(_points.Count - 1);
+                if (_allPoints.Count > 0)
+                    _allPoints.RemoveAt(_allPoints.Count - 1);
 
-                await ReDraw(_points);
+                await ReDraw(_allPoints);
             }
             else
             {
@@ -363,37 +391,52 @@ namespace BlazorApp1.Pages
             _fillColor = '#' + fillColor;
         }
 
-        private async Task ReDraw(IList<DrawPoint> points)
+        private async Task Start()
+        {
+            _timer.Enabled = true;
+            _timer.Start();
+        }
+
+        private async Task Stop()
+        {
+            _timer.Enabled = false;
+            _timer.Stop();
+        }
+
+        private async Task ReDraw(IList<IList<DrawPoint>> allPoints)
         {
             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
-            foreach (var point in points)
+            foreach (var points in allPoints)
             {
-                point.LineColor = "orange";
+                foreach (var point in points)
+                {
+                    point.LineColor = "orange";
 
-                if (point.Tool == "pencil")
-                {
-                    await DrawLine(_mainContext, point, false);
-                }
-                else if (point.Tool == "marker")
-                {
-                    await DrawLine(_mainContext, point, false);
-                }
-                else if (point.Tool == "eraser")
-                {
-                    await DrawLine(_mainContext, point, false);
-                }
-                else if (point.Tool == "line")
-                {
-                    await DrawLine(_mainContext, point, false);
-                }
-                else if (point.Tool == "arrow")
-                {
-                    await DrawArrow(_mainContext, point, false);
-                }
-                else if (point.Tool == "rectangle")
-                {
-                    await DrawRectangle(_mainContext, point, false);
+                    if (point.Tool == "pencil")
+                    {
+                        await DrawLine(_mainContext, point, false);
+                    }
+                    else if (point.Tool == "marker")
+                    {
+                        await DrawLine(_mainContext, point, false);
+                    }
+                    else if (point.Tool == "eraser")
+                    {
+                        await DrawLine(_mainContext, point, false);
+                    }
+                    else if (point.Tool == "line")
+                    {
+                        await DrawLine(_mainContext, point, false);
+                    }
+                    else if (point.Tool == "arrow")
+                    {
+                        await DrawArrow(_mainContext, point, false);
+                    }
+                    else if (point.Tool == "rectangle")
+                    {
+                        await DrawRectangle(_mainContext, point, false);
+                    }
                 }
             }
         }

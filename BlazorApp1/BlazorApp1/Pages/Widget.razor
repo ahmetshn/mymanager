@@ -266,3 +266,27 @@
         </tbody>
     </table>
 </div>
+
+
+<div class="bg-secondary" style="position:absolute;z-index:99;bottom:0;left:50px;right:0;">
+    <table class="table border-0 p-0 m-0 align-middle text-center">
+        <tbody>
+            <tr>
+                <td class="border-0 p-0 m-0 align-middle text-center">
+                    <button type="button"
+                            @onclick="@(e => Start())"
+                            class="btn btn-primary">
+                        Kaydet
+                    </button>
+                    <button type="button" @onclick="@(e => Stop())"
+                            class="btn  btn-danger">
+                        Durdur
+                    </button>
+                    <button type="button" class="btn btn-warning ">Oynat</button>
+                </td>
+                <td style="width:@lastCellWidth%" class="border-0">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
