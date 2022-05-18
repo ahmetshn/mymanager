@@ -278,11 +278,14 @@
                             class="btn btn-primary">
                         Kaydet
                     </button>
-                    <button type="button" @onclick="@(e => Stop())"
+                    <button type="button" 
+                    @onclick="@(e => Stop())"
                             class="btn  btn-danger">
                         Durdur
                     </button>
-                    <button type="button" class="btn btn-warning ">Oynat</button>
+                    <button type="button" 
+                    @onclick="@(e => Play())"
+                    class="btn btn-warning ">Oynat</button>
                 </td>
                 <td style="width:@lastCellWidth%" class="border-0">
                 </td>

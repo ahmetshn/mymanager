@@ -19,7 +19,7 @@ namespace BlazorApp1.Pages
             public double Height { get; set; }
         }
 
-        private IList<IList<DrawPoint>> _allPoints;
+        private IList<DrawPointList> _allPoints;
         private IList<DrawPoint> _points;
         private ElementReference _container;
         private Canvas _tempCanvas;
@@ -66,6 +66,8 @@ namespace BlazorApp1.Pages
         private long _tick;
         //private PeriodicTimer _timer { get; set; }
 
+        private bool _play;
+
         protected override void OnInitialized()
         {
             _showLineWidth = true;
@@ -80,15 +82,13 @@ namespace BlazorApp1.Pages
             _lineCap = LineCap.Round;
             _lineJoin = LineJoin.Miter;
 
-            _allPoints = new List<IList<DrawPoint>>();
+            _allPoints = new List<DrawPointList>();
 
             _timer = new System.Timers.Timer();
             _timer.Interval = 1;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = true;
 
-
-            DateTime dateTime = DateTime.Now;
             _tick = 0;
         }
 
@@ -98,6 +98,18 @@ namespace BlazorApp1.Pages
             Console.WriteLine(" Ticks  : {0} ", _tick);
             //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
             //Console.WriteLine(" Event  : {0} ", e.SignalTime);
+
+            if (_play)
+            {
+                var ss = _allPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
+
+                //var empnamesEnum = from emp in _allPoints
+                //                   where emp.DrawPoints.Where(p=>p.Tick == _tick)
+                //                   select emp;
+
+                Console.WriteLine(ss.Count);
+                ReDraw(ss);
+            }
         }
 
         private async Task Set(Batch2D context, DrawPoint drawPoint)
@@ -235,7 +247,9 @@ namespace BlazorApp1.Pages
             last_mousex = 0;
             last_mousey = 0;
 
-            _allPoints.Add(_points);
+            DrawPointList drawPointList = new DrawPointList();
+            drawPointList.DrawPoints = _points;
+            _allPoints.Add(drawPointList);
             _points = null;
         }
 
@@ -344,6 +358,7 @@ namespace BlazorApp1.Pages
                 if (_allPoints.Count > 0)
                     _allPoints.RemoveAt(_allPoints.Count - 1);
 
+                await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
                 await ReDraw(_allPoints);
             }
             else
@@ -403,13 +418,32 @@ namespace BlazorApp1.Pages
             _timer.Stop();
         }
 
-        private async Task ReDraw(IList<IList<DrawPoint>> allPoints)
+        private async Task Play()
         {
+
+            foreach (var points in _allPoints)
+            {
+                foreach (var point in points.DrawPoints)
+                {
+                    Console.WriteLine(string.Format("Tick = {0} Tool = {1}", point.Tick, point.Tool));
+                }
+            }
+
             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+
+            _tick = 0;
+            _play = true;
+            _timer.Enabled = true;
+            _timer.Start();
+        }
+
+        private async Task ReDraw(IList<DrawPointList> allPoints)
+        {
+
 
             foreach (var points in allPoints)
             {
-                foreach (var point in points)
+                foreach (var point in points.DrawPoints)
                 {
                     point.LineColor = "orange";
 
