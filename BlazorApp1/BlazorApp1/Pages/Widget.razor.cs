@@ -158,8 +158,8 @@ namespace BlazorApp1.Pages
 
             render_required = false;
 
-            this.last_mousex = mousex = e.ClientX - canvasx;
-            this.last_mousey = mousey = e.ClientY - canvasy;
+            last_mousex = mousex = e.ClientX - canvasx;
+            last_mousey = mousey = e.ClientY - canvasy;
             start_mousex = clientX - canvasx;
             start_mousey = clientY - canvasy;
 
@@ -233,7 +233,7 @@ namespace BlazorApp1.Pages
 
                 DrawPoint drawPoint = GetDrawPoint();
                 _points.Add(drawPoint);
-                await DrawPencil(_activeContext, drawPoint);
+                await DrawLine(_activeContext, drawPoint, false);
 
                 last_mousex = mousex;
                 last_mousey = mousey;
@@ -248,7 +248,7 @@ namespace BlazorApp1.Pages
                 _lineJoin = LineJoin.Round;
                 DrawPoint drawPoint = GetDrawPoint();
                 _points.Add(drawPoint);
-                await DrawMarker(_activeContext, drawPoint);
+                await DrawLine(_activeContext, drawPoint, false);
 
                 last_mousex = mousex;
                 last_mousey = mousey;
@@ -265,7 +265,7 @@ namespace BlazorApp1.Pages
                 DrawPoint drawPoint = GetDrawPoint();
 
                 _points.Add(drawPoint);
-                await DrawEraser(_activeContext, drawPoint);
+                await DrawLine(_activeContext, drawPoint, false);
 
                 last_mousex = mousex;
                 last_mousey = mousey;
@@ -373,15 +373,15 @@ namespace BlazorApp1.Pages
 
                 if (point.Tool == "pencil")
                 {
-                    await DrawPencil(_mainContext, point);
+                    await DrawLine(_mainContext, point, false);
                 }
                 else if (point.Tool == "marker")
                 {
-                    await DrawMarker(_mainContext, point);
+                    await DrawLine(_mainContext, point, false);
                 }
                 else if (point.Tool == "eraser")
                 {
-                    await DrawEraser(_mainContext, point);
+                    await DrawLine(_mainContext, point, false);
                 }
                 else if (point.Tool == "line")
                 {
@@ -398,41 +398,41 @@ namespace BlazorApp1.Pages
             }
         }
 
-        private async Task DrawPencil(Context2D context, DrawPoint point)
-        {
-            await using (Batch2D batch = context.CreateBatch())
-            {
-                await Set(batch, point);
-                await batch.BeginPathAsync();
-                await batch.MoveToAsync(point.StartX, point.StartY);
-                await batch.LineToAsync(point.EndX, point.EndY);
-                await batch.StrokeAsync();
-            }
-        }
+        //private async Task DrawPencil(Context2D context, DrawPoint point)
+        //{
+        //    await using (Batch2D batch = context.CreateBatch())
+        //    {
+        //        await Set(batch, point);
+        //        await batch.BeginPathAsync();
+        //        await batch.MoveToAsync(point.StartX, point.StartY);
+        //        await batch.LineToAsync(point.EndX, point.EndY);
+        //        await batch.StrokeAsync();
+        //    }
+        //}
 
-        private async Task DrawMarker(Context2D context, DrawPoint point)
-        {
-            await using (Batch2D batch = context.CreateBatch())
-            {
-                await Set(batch, point);
-                await batch.BeginPathAsync();
-                await batch.MoveToAsync(point.StartX, point.StartY);
-                await batch.LineToAsync(point.EndX, point.EndY);
-                await batch.StrokeAsync();
-            }
-        }
+        //private async Task DrawMarker(Context2D context, DrawPoint point)
+        //{
+        //    await using (Batch2D batch = context.CreateBatch())
+        //    {
+        //        await Set(batch, point);
+        //        await batch.BeginPathAsync();
+        //        await batch.MoveToAsync(point.StartX, point.StartY);
+        //        await batch.LineToAsync(point.EndX, point.EndY);
+        //        await batch.StrokeAsync();
+        //    }
+        //}
 
-        private async Task DrawEraser(Context2D context, DrawPoint point)
-        {
-            await using (Batch2D batch = context.CreateBatch())
-            {
-                await Set(batch, point);
-                await batch.BeginPathAsync();
-                await batch.MoveToAsync(point.StartX, point.StartY);
-                await batch.LineToAsync(point.EndX, point.EndY);
-                await batch.StrokeAsync();
-            }
-        }
+        //private async Task DrawEraser(Context2D context, DrawPoint point)
+        //{
+        //    await using (Batch2D batch = context.CreateBatch())
+        //    {
+        //        await Set(batch, point);
+        //        await batch.BeginPathAsync();
+        //        await batch.MoveToAsync(point.StartX, point.StartY);
+        //        await batch.LineToAsync(point.EndX, point.EndY);
+        //        await batch.StrokeAsync();
+        //    }
+        //}
 
         private async Task DrawLine(Context2D context, DrawPoint point, bool transfer)
         {
