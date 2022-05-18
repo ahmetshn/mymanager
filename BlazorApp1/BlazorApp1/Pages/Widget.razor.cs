@@ -163,13 +163,7 @@ namespace BlazorApp1.Pages
             start_mousex = clientX - canvasx;
             start_mousey = clientY - canvasy;
 
-
             this.mousedown = true;
-
-            Console.WriteLine(string.Format("Page clientX={0} clientY={1}", clientX, clientY));
-            Console.WriteLine(string.Format("Canvas start_mousex={0} start_mousey={1}", start_mousex, start_mousey));
-
-
         }
 
         private async Task MouseUpCanvas(MouseEventArgs e)
@@ -177,103 +171,35 @@ namespace BlazorApp1.Pages
             render_required = false;
             mousedown = false;
 
-            Console.WriteLine("-----------------------------");
-            Console.WriteLine(string.Format("transfer={0} _tool= {1}", _transfer, _tool));
-
             if (_transfer)
             {
                 if (_tool == "line")
                 {
-                    Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-                    //last_mousex = clientX - canvasx;
-                    //last_mousey = clientY - canvasy;
-
                     _globalAlpha = 1;
                     _lineCap = LineCap.Round;
                     _lineJoin = LineJoin.Round;
                     DrawPoint drawPoint = GetDrawPoint();
                     _points.Add(drawPoint);
                     await DrawLine(_mainContext, drawPoint, false);
-
-                    //await using (var context = _mainContext.CreateBatch())
-                    //{
-
-                    //    DrawPoint drawPoint = await Set(context);
-
-                    //    await context.BeginPathAsync();
-                    //    await context.MoveToAsync(mousex, mousey);
-                    //    await context.LineToAsync(last_mousex, last_mousey);
-                    //    await context.StrokeAsync();
-
-                    //    _points.Add(drawPoint);
-                    //}
                 }
-                //else if (_tool == "arrow")
-                //{
-                //    //Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-
-                //    await using (var context = _mainContext.CreateBatch())
-                //    {
-                //        _lineCap = LineCap.Round;
-                //        _lineJoin = LineJoin.Miter;
-
-                //        DrawPoint drawPoint = await Set(context);
-
-                //        var arrowSize = _lineWidth;
-
-                //        var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
-
-                //        await context.BeginPathAsync();
-                //        await context.MoveToAsync(mousex, mousey);
-                //        await context.LineToAsync(last_mousex, last_mousey);
-                //        await context.StrokeAsync();
-
-                //        await context.BeginPathAsync();
-
-                //        await context.MoveToAsync(last_mousex, last_mousey);
-
-                //        arrowSize = arrowSize * 5;
-
-                //        if (!string.IsNullOrEmpty(_fillColor))
-                //            await context.StrokeStyleAsync(_fillColor);
-
-                //        await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-
-                //        await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle + Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle + Math.PI / 7));
-
-                //        await context.LineToAsync(last_mousex, last_mousey);
-
-                //        await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-
-                //        //this.handleOptions(context, options);
-
-                //        await context.StrokeAsync();
-
-                //        _points.Add(drawPoint);
-                //    }
-                //}
-                //else if (_tool == "rectangle")
-                //{
-                //    double with = last_mousex - start_mousex;
-                //    double height = last_mousey - start_mousey;
-
-                //    await using (var context = _mainContext.CreateBatch())
-                //    {
-                //        _lineCap = LineCap.Square;
-                //        _lineJoin = LineJoin.Miter;
-
-                //        DrawPoint drawPoint = await Set(context);
-
-                //        await context.StrokeStyleAsync(_lineColor);
-                //        await context.StrokeRectAsync(start_mousex, start_mousey, with, height);
-
-                //        await context.FillStyleAsync(_fillColor);
-                //        await context.FillRectAsync(start_mousex, start_mousey, with, height);
-                //        _points.Add(drawPoint);
-                //    }
-                //}
-
-
+                else if (_tool == "arrow")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Round;
+                    _lineJoin = LineJoin.Round;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawArrow(_mainContext, drawPoint, false);
+                }
+                else if (_tool == "rectangle")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Square;
+                    _lineJoin = LineJoin.Bevel;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawRectangle(_mainContext, drawPoint, false);
+                }
             }
 
             await using (var context = _tempContext.CreateBatch())
@@ -296,8 +222,6 @@ namespace BlazorApp1.Pages
             var clientX = e.ClientX;
             var clientY = e.ClientY;
 
-            Console.WriteLine(string.Format("_tool = {0}", _tool));
-
             if (_tool == "pencil")
             {
                 mousex = e.ClientX - canvasx;
@@ -319,28 +243,12 @@ namespace BlazorApp1.Pages
                 mousex = e.ClientX - canvasx;
                 mousey = e.ClientY - canvasy;
 
-                //Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-
                 _globalAlpha = 0.1;
                 _lineCap = LineCap.Round;
                 _lineJoin = LineJoin.Round;
                 DrawPoint drawPoint = GetDrawPoint();
                 _points.Add(drawPoint);
                 await DrawMarker(_activeContext, drawPoint);
-
-                //await using (var context = _activeContext.CreateBatch())
-                //{
-                //    _globalAlpha = 0.1;
-                //    _lineCap = LineCap.Round;
-                //    _lineJoin = LineJoin.Round;
-                //    DrawPoint drawPoint = await Set(context);
-
-                //    await context.BeginPathAsync();
-                //    await context.MoveToAsync(mousex, mousey);
-                //    await context.LineToAsync(last_mousex, last_mousey);
-                //    await context.StrokeAsync();
-                //    _points.Add(drawPoint);
-                //}
 
                 last_mousex = mousex;
                 last_mousey = mousey;
@@ -349,44 +257,21 @@ namespace BlazorApp1.Pages
             {
                 mousex = e.ClientX - canvasx;
                 mousey = e.ClientY - canvasy;
-                //await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
-
-                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-
 
                 _globalAlpha = 1;
                 _lineCap = LineCap.Round;
                 _lineJoin = LineJoin.Round;
                 _lineColor = "white";
                 DrawPoint drawPoint = GetDrawPoint();
+
                 _points.Add(drawPoint);
                 await DrawEraser(_activeContext, drawPoint);
-
-                //await using (var context = _activeContext.CreateBatch())
-                //{
-                //    _globalAlpha = 1;
-                //    _lineCap = LineCap.Round;
-                //    _lineJoin = LineJoin.Round;
-                //    _lineColor = "white";
-                //    DrawPoint drawPoint = await Set(context);
-
-                //    await context.BeginPathAsync();
-                //    await context.MoveToAsync(mousex, mousey);
-                //    await context.LineToAsync(last_mousex, last_mousey);
-                //    await context.StrokeAsync();
-                //    _points.Add(drawPoint);
-                //}
 
                 last_mousex = mousex;
                 last_mousey = mousey;
             }
             else if (_tool == "line")
             {
-                //mousex = e.ClientX - canvasx;
-                //mousey = e.ClientY - canvasy;
-                //await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
-
-                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
@@ -394,31 +279,11 @@ namespace BlazorApp1.Pages
                 _lineCap = LineCap.Round;
                 _lineJoin = LineJoin.Round;
                 DrawPoint drawPoint = GetDrawPoint();
-                //_points.Add(drawPoint);
+
                 await DrawLine(_activeContext, drawPoint, true);
-
-                //await using (var context = _activeContext.CreateBatch())
-                //{
-                //    _globalAlpha = 1;
-                //    _lineCap = LineCap.Round;
-                //    _lineJoin = LineJoin.Round;
-                //    DrawPoint drawPoint = await Set(context);
-
-                //    await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                //    await context.BeginPathAsync();
-                //    await context.MoveToAsync(mousex, mousey);
-                //    await context.LineToAsync(last_mousex, last_mousey);
-                //    await context.StrokeAsync();
-                //    _points.Add(drawPoint);
-                //}
-
-                //last_mousex = mousex;
-                //last_mousey = mousey;
             }
             else if (_tool == "arrow")
             {
-                Console.WriteLine(string.Format("mousex={0} mousey={1} last_mousex={2} last_mousey={3}", mousex, mousey, last_mousex, last_mousey));
-
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
@@ -426,79 +291,20 @@ namespace BlazorApp1.Pages
                 _lineCap = LineCap.Round;
                 _lineJoin = LineJoin.Round;
                 DrawPoint drawPoint = GetDrawPoint();
-                _points.Add(drawPoint);
-                await DrawArrow(_activeContext, drawPoint);
 
-                //await using (var context = _activeContext.CreateBatch())
-                //{
-                //    _globalAlpha = 1;
-                //    _lineCap = LineCap.Round;
-                //    _lineJoin = LineJoin.Round;
-                //    DrawPoint drawPoint = await Set(context);
-
-                //    var arrowSize = _lineWidth;
-
-                //    var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
-                //    await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
-
-                //    await context.BeginPathAsync();
-                //    await context.MoveToAsync(mousex, mousey);
-                //    await context.LineToAsync(last_mousex, last_mousey);
-                //    await context.StrokeAsync();
-
-                //    await context.BeginPathAsync();
-
-                //    await context.MoveToAsync(last_mousex, last_mousey);
-
-                //    arrowSize = arrowSize * 5;
-
-                //    if (!string.IsNullOrEmpty(_fillColor))
-                //        await context.StrokeStyleAsync(_fillColor);
-
-                //    await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-
-                //    await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle + Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle + Math.PI / 7));
-
-                //    await context.LineToAsync(last_mousex, last_mousey);
-
-                //    await context.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
-
-                //    await context.StrokeAsync();
-                //    _points.Add(drawPoint);
-                //}
+                await DrawArrow(_activeContext, drawPoint, true);
             }
             else if (_tool == "rectangle")
             {
                 last_mousex = clientX - canvasx;
                 last_mousey = clientY - canvasy;
 
-                //double with = last_mousex - start_mousex;
-                //double height = last_mousey - start_mousey;
-
                 _globalAlpha = 1;
                 _lineCap = LineCap.Square;
                 _lineJoin = LineJoin.Bevel;
                 DrawPoint drawPoint = GetDrawPoint();
-                _points.Add(drawPoint);
-                await DrawRectangle(_activeContext, drawPoint);
 
-                //await using (var context = _activeContext.CreateBatch())
-                //{
-
-                //    _globalAlpha = 1;
-                //    _lineCap = LineCap.Square;
-                //    _lineJoin = LineJoin.Miter;
-                //    DrawPoint drawPoint = await Set(context);
-
-                //    await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
-
-                //    await context.StrokeStyleAsync(_lineColor);
-                //    await context.StrokeRectAsync(start_mousex, start_mousey, with, height);
-
-                //    await context.FillStyleAsync(_fillColor);
-                //    await context.FillRectAsync(start_mousex, start_mousey, with, height);
-                //    _points.Add(drawPoint);
-                //}
+                await DrawRectangle(_activeContext, drawPoint, true);
             }
 
         }
@@ -507,12 +313,8 @@ namespace BlazorApp1.Pages
         {
             if (tool == "undo")
             {
-                Console.WriteLine("Points tamamlandıktan sonra bu kısım yazılacak");
-
-                foreach (var item in _points)
-                {
-                    Console.WriteLine(string.Format("Tool={0} {1} {2} {3} {4}", item.Tool, item.StartX, item.StartY, item.EndX, item.EndY));
-                }
+                if (_points.Count > 0)
+                    _points.RemoveAt(_points.Count - 1);
 
                 await ReDraw(_points);
             }
@@ -526,8 +328,6 @@ namespace BlazorApp1.Pages
 
                 _mainCanvas.AdditionalAttributes.Remove("style");
                 _tempCanvas.AdditionalAttributes.Remove("style");
-
-                //if (tool == "line" || tool == "arrow" || tool == "rectangle")
 
                 if (transfer)
                 {
@@ -567,13 +367,6 @@ namespace BlazorApp1.Pages
         {
             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
-            if (points.Count > 1)
-            {
-                Console.WriteLine("points.Count = " + points.Count);
-                points.RemoveAt(points.Count - 1);
-                Console.WriteLine("points.Count = " + points.Count);
-            }
-
             foreach (var point in points)
             {
                 point.LineColor = "orange";
@@ -593,6 +386,14 @@ namespace BlazorApp1.Pages
                 else if (point.Tool == "line")
                 {
                     await DrawLine(_mainContext, point, false);
+                }
+                else if (point.Tool == "arrow")
+                {
+                    await DrawArrow(_mainContext, point, false);
+                }
+                else if (point.Tool == "rectangle")
+                {
+                    await DrawRectangle(_mainContext, point, false);
                 }
             }
         }
@@ -649,44 +450,49 @@ namespace BlazorApp1.Pages
             }
         }
 
-        private async Task DrawArrow(Context2D context, DrawPoint point)
+        private async Task DrawArrow(Context2D context, DrawPoint point, bool transfer)
         {
             await using (Batch2D batch = context.CreateBatch())
             {
                 await Set(batch, point);
 
-                var arrowSize = _lineWidth;
+                var arrowSize = point.LineWidth;
 
-                var angle = Math.Atan2(last_mousey - mousey, last_mousex - mousex);
-                await batch.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                var angle = Math.Atan2(point.EndY - point.StartY, point.EndX - point.StartX);
+
+                if (transfer)
+                    await batch.ClearRectAsync(0, 0, _position.Width, _position.Height);
+
+
+                await context.StrokeStyleAsync(point.LineColor);
 
                 await batch.BeginPathAsync();
-                await batch.MoveToAsync(mousex, mousey);
-                await batch.LineToAsync(last_mousex, last_mousey);
+                await batch.MoveToAsync(point.StartX, point.StartY);
+                await batch.LineToAsync(point.EndX, point.EndY);
                 await batch.StrokeAsync();
 
                 await batch.BeginPathAsync();
 
-                await batch.MoveToAsync(last_mousex, last_mousey);
+                await batch.MoveToAsync(point.EndX, point.EndY);
 
                 arrowSize = arrowSize * 5;
 
                 if (!string.IsNullOrEmpty(point.FillColor))
-                    await context.StrokeStyleAsync(point.FillColor);
+                    await batch.StrokeStyleAsync(point.FillColor);
 
-                await batch.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
+                await batch.LineToAsync(point.EndX - arrowSize * Math.Cos(angle - Math.PI / 7), point.EndY - arrowSize * Math.Sin(angle - Math.PI / 7));
 
-                await batch.LineToAsync(last_mousex - arrowSize * Math.Cos(angle + Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle + Math.PI / 7));
+                await batch.LineToAsync(point.EndX - arrowSize * Math.Cos(angle + Math.PI / 7), point.EndY - arrowSize * Math.Sin(angle + Math.PI / 7));
 
-                await batch.LineToAsync(last_mousex, last_mousey);
+                await batch.LineToAsync(point.EndX, point.EndY);
 
-                await batch.LineToAsync(last_mousex - arrowSize * Math.Cos(angle - Math.PI / 7), last_mousey - arrowSize * Math.Sin(angle - Math.PI / 7));
+                await batch.LineToAsync(point.EndX - arrowSize * Math.Cos(angle - Math.PI / 7), point.EndY - arrowSize * Math.Sin(angle - Math.PI / 7));
 
                 await batch.StrokeAsync();
             }
         }
 
-        private async Task DrawRectangle(Context2D context, DrawPoint point)
+        private async Task DrawRectangle(Context2D context, DrawPoint point, bool transfer)
         {
             double with = point.EndX - point.StartX;
             double height = point.EndY - point.StartY;
@@ -695,13 +501,17 @@ namespace BlazorApp1.Pages
             {
                 await Set(batch, point);
 
-                await batch.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                if (transfer)
+                    await batch.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
                 await batch.StrokeStyleAsync(point.LineColor);
-                await batch.StrokeRectAsync(start_mousex, start_mousey, with, height);
+                await batch.StrokeRectAsync(point.StartX, point.StartY, with, height);
 
-                await batch.FillStyleAsync(point.FillColor);
-                await batch.FillRectAsync(start_mousex, start_mousey, with, height);
+                if (!string.IsNullOrEmpty(point.FillColor))
+                {
+                    await batch.FillStyleAsync(point.FillColor);
+                    await batch.FillRectAsync(point.StartX, point.StartY, with, height);
+                }
             }
         }
     }

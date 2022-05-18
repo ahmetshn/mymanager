@@ -105,11 +105,9 @@ namespace BlazorApp1.Pages
             var clientX = touchPoint.ClientX;
             var clientY = touchPoint.ClientY;
 
-            Console.WriteLine(string.Format("TouchDownCanvas clientX={0} clientY={1}", clientX, clientY));
-
             render_required = false;
-            this.last_mousex = mousex = clientX - canvasx;
-            this.last_mousey = mousey = clientY - canvasy;
+            last_mousex = mousex = clientX - canvasx;
+            last_mousey = mousey = clientY - canvasy;
             start_mousex = last_mousex;
             start_mousey = last_mousey;
 
@@ -150,13 +148,6 @@ namespace BlazorApp1.Pages
 
         async Task TouchMoveCanvasAsync(TouchEventArgs e)
         {
-            //var items = e.Touches;
-
-            //foreach (var item in items)
-            //{
-            //    Console.WriteLine(string.Format("ClientX={0} ClientY={1} ", item.ClientX, item.ClientY));
-            //}
-
             TouchPoint touchPoint = e.TargetTouches[e.TargetTouches.Length - 1];
 
             var clientX = touchPoint.ClientX;
@@ -192,11 +183,7 @@ namespace BlazorApp1.Pages
                 await using (var ctx2 = ctx1.CreateBatch())
                 {
                     await ctx2.ClearRectAsync(0, 0, 800, 800);
-                    //   var x = e.pageX - canvas.offsetLeft,
-                    // y = e.pageY - canvas.offsetTop;
-
-                    Console.WriteLine(string.Format("start_mousex = {0} - start_mousey = {1} - x = {2} - y = {3}", start_mousex, start_mousey, x, y));
-
+                    
                     await ctx2.StrokeRectAsync(start_mousex, start_mousey, x, y);
                 }
             }
