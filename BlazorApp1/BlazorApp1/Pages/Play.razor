@@ -2,8 +2,19 @@
 @page "/play"
 
 <section @ref="_container" class="design-surface">
-    <Canvas @ref="_mainCanvas" width="@_width" height="@_height"></Canvas>
+    <Canvas @ref="_tempCanvas"
+            @onmousemove="MouseMoveCanvasAsync"
+            @onmouseup="MouseUpCanvas"
+            @onmousedown="MouseDownCanvas"
+            width="@_width" height="@_height"></Canvas>
+
+    <Canvas @ref="_mainCanvas"
+            @onmousemove="MouseMoveCanvasAsync"
+            @onmouseup="MouseUpCanvas"
+            @onmousedown="MouseDownCanvas"
+            width="@_width" height="@_height"></Canvas>
 </section>
+
 <section style="position: absolute;
 z-index: 15;
 left: 0;
