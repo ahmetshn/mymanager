@@ -1,0 +1,110 @@
+[
+  {
+    "DrawPoints": [
+      {
+        "Tick": 170,
+        "Tool": "rectangle",
+        "StartX": 213.0,
+        "StartY": 205.0,
+        "EndX": 394.0,
+        "EndY": 336.0,
+        "LineWidth": 1.0,
+        "LineColor": "orange",
+        "FillColor": "",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  },
+  {
+    "DrawPoints": [
+      {
+        "Tick": 249,
+        "Tool": "rectangle",
+        "StartX": 469.0,
+        "StartY": 269.0,
+        "EndX": 568.0,
+        "EndY": 339.0,
+        "LineWidth": 1.0,
+        "LineColor": "orange",
+        "FillColor": "",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  },
+  {
+    "DrawPoints": [
+      {
+        "Tick": 412,
+        "Tool": "rectangle",
+        "StartX": 916.0,
+        "StartY": 143.0,
+        "EndX": 1017.0,
+        "EndY": 314.0,
+        "LineWidth": 1.0,
+        "LineColor": "orange",
+        "FillColor": "",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  },
+  {
+    "DrawPoints": [
+      {
+        "Tick": 585,
+        "Tool": "rectangle",
+        "StartX": 1517.0,
+        "StartY": 217.0,
+        "EndX": 1285.0,
+        "EndY": 436.0,
+        "LineWidth": 1.0,
+        "LineColor": "orange",
+        "FillColor": "#c2372b",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  },
+  {
+    "DrawPoints": [
+      {
+        "Tick": 730,
+        "Tool": "rectangle",
+        "StartX": 1011.0,
+        "StartY": 413.0,
+        "EndX": 709.0,
+        "EndY": 497.0,
+        "LineWidth": 1.0,
+        "LineColor": "orange",
+        "FillColor": "#26ad5c",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  },
+  {
+    "DrawPoints": [
+      {
+        "Tick": 875,
+        "Tool": "rectangle",
+        "StartX": 634.0,
+        "StartY": 161.0,
+        "EndX": 757.0,
+        "EndY": 344.0,
+        "LineWidth": 8.0,
+        "LineColor": "orange",
+        "FillColor": "#26ad5c",
+        "GlobalAlpha": 1.0,
+        "LineCap": 0,
+        "LineJoin": 0
+      }
+    ]
+  }
+]

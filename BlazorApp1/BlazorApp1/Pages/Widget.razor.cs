@@ -3,6 +3,7 @@ using Excubo.Blazor.Canvas.Contexts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
 
 namespace BlazorApp1.Pages
 {
@@ -178,6 +179,12 @@ namespace BlazorApp1.Pages
                 _tempContext = await _tempCanvas.GetContext2DAsync(true);
                 _mainContext = await _mainCanvas.GetContext2DAsync(true);
 
+
+                //var scale = Math.Min((_position.Width / 2300), (_position.Height / 1800));
+                //await _tempContext.JS.scale(scale, scale);
+                //await _mainContext.JS.scale(scale, scale);
+                //Console.WriteLine("_position.Width = {0} _position.Height = {1} scale = {2}", _position.Width, _position.Height, scale);
+
                 // initialize settings
                 await _tempContext.GlobalCompositeOperationAsync(CompositeOperation.Source_Over);
                 await _tempContext.StrokeStyleAsync(clr);
@@ -194,6 +201,7 @@ namespace BlazorApp1.Pages
 
                 _mainCanvas.AdditionalAttributes.Add("style", "z-index:15;");
                 _tempCanvas.AdditionalAttributes.Add("style", "z-index:5;");
+
 
                 _activeContext = _mainContext;
             }
@@ -476,6 +484,13 @@ namespace BlazorApp1.Pages
             _play = true;
             _timer.Enabled = true;
             _timer.Start();
+        }
+
+        private async Task Serilaze()
+        {
+            var str = JsonConvert.SerializeObject(_playAllPoints);
+            Console.WriteLine(str);
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", str);
         }
 
         private async Task ReDraw(IList<DrawPointList> allPoints)
