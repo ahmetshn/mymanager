@@ -26,9 +26,4 @@ namespace BlazorApp1
 
         public LineJoin LineJoin { get; set; }
     }
-
-    public class DrawPointList
-    {
-        public IList<DrawPoint> DrawPoints { get; set; }
-    }
 }

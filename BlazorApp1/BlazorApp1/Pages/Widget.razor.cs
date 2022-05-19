@@ -19,7 +19,10 @@ namespace BlazorApp1.Pages
             public double Height { get; set; }
         }
 
-        private IList<DrawPointList> _allPoints;
+        private IList<DrawPointList> _currentPlayAllPoints;
+        private IList<DrawPointList> _playAllPoints;
+        private IList<DrawPointList> _reDrawAllPoints;
+
         private IList<DrawPoint> _points;
         private ElementReference _container;
         private Canvas _tempCanvas;
@@ -82,7 +85,8 @@ namespace BlazorApp1.Pages
             _lineCap = LineCap.Round;
             _lineJoin = LineJoin.Miter;
 
-            _allPoints = new List<DrawPointList>();
+            _reDrawAllPoints = new List<DrawPointList>();
+            _playAllPoints = new List<DrawPointList>();
 
             _timer = new System.Timers.Timer();
             _timer.Interval = 1;
@@ -95,20 +99,39 @@ namespace BlazorApp1.Pages
         private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
             _tick++;
-            Console.WriteLine(" Ticks  : {0} ", _tick);
+            //Console.WriteLine(" Ticks  : {0} ", _tick);
             //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
             //Console.WriteLine(" Event  : {0} ", e.SignalTime);
 
             if (_play)
             {
-                var ss = _allPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
+                var drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
 
-                //var empnamesEnum = from emp in _allPoints
-                //                   where emp.DrawPoints.Where(p=>p.Tick == _tick)
-                //                   select emp;
+                var removerPoints = drawPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick && x.Tool == "undo")).ToList();
 
-                Console.WriteLine(ss.Count);
-                ReDraw(ss);
+                if (removerPoints.Count > 0)
+                {
+                    foreach (var drawPoint in removerPoints)
+                    {
+                        foreach (var item in drawPoint.DrawPoints)
+                        {
+                            Console.WriteLine("Tool =" + item.Tool);
+                        }
+                    }
+
+                    var index = _currentPlayAllPoints.IndexOf(removerPoints[0]);
+
+                    _currentPlayAllPoints.RemoveAt(index);
+
+                    _currentPlayAllPoints.RemoveAt(index - 1);
+
+                    _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                    drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick < _tick)).ToList();
+                }
+
+                //Console.WriteLine(drawPoints.Count);
+                ReDraw(drawPoints);
+
             }
         }
 
@@ -249,7 +272,8 @@ namespace BlazorApp1.Pages
 
             DrawPointList drawPointList = new DrawPointList();
             drawPointList.DrawPoints = _points;
-            _allPoints.Add(drawPointList);
+            _reDrawAllPoints.Add(drawPointList);
+            _playAllPoints.Add(drawPointList);
             _points = null;
         }
 
@@ -355,11 +379,23 @@ namespace BlazorApp1.Pages
         {
             if (tool == "undo")
             {
-                if (_allPoints.Count > 0)
-                    _allPoints.RemoveAt(_allPoints.Count - 1);
+                if (_reDrawAllPoints.Count > 0)
+                {
+                    _reDrawAllPoints.RemoveAt(_reDrawAllPoints.Count - 1);
+
+                    DrawPoint drawPoint = new DrawPoint();
+                    drawPoint.Tool = tool;
+                    drawPoint.Tick = _tick;
+
+                    DrawPointList drawPointList = new DrawPointList();
+                    drawPointList.DrawPoints = new List<DrawPoint>();
+                    drawPointList.DrawPoints.Add(drawPoint);
+
+                    _playAllPoints.Add(drawPointList);
+                }
 
                 await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                await ReDraw(_allPoints);
+                await ReDraw(_reDrawAllPoints);
             }
             else
             {
@@ -420,8 +456,13 @@ namespace BlazorApp1.Pages
 
         private async Task Play()
         {
+            DrawPointList[] array = new DrawPointList[_playAllPoints.Count];
+            _playAllPoints.CopyTo(array, 0);
 
-            foreach (var points in _allPoints)
+            _currentPlayAllPoints = new List<DrawPointList>();
+            _currentPlayAllPoints = array.ToList();
+
+            foreach (var points in _currentPlayAllPoints)
             {
                 foreach (var point in points.DrawPoints)
                 {
@@ -439,8 +480,6 @@ namespace BlazorApp1.Pages
 
         private async Task ReDraw(IList<DrawPointList> allPoints)
         {
-
-
             foreach (var points in allPoints)
             {
                 foreach (var point in points.DrawPoints)
@@ -474,42 +513,6 @@ namespace BlazorApp1.Pages
                 }
             }
         }
-
-        //private async Task DrawPencil(Context2D context, DrawPoint point)
-        //{
-        //    await using (Batch2D batch = context.CreateBatch())
-        //    {
-        //        await Set(batch, point);
-        //        await batch.BeginPathAsync();
-        //        await batch.MoveToAsync(point.StartX, point.StartY);
-        //        await batch.LineToAsync(point.EndX, point.EndY);
-        //        await batch.StrokeAsync();
-        //    }
-        //}
-
-        //private async Task DrawMarker(Context2D context, DrawPoint point)
-        //{
-        //    await using (Batch2D batch = context.CreateBatch())
-        //    {
-        //        await Set(batch, point);
-        //        await batch.BeginPathAsync();
-        //        await batch.MoveToAsync(point.StartX, point.StartY);
-        //        await batch.LineToAsync(point.EndX, point.EndY);
-        //        await batch.StrokeAsync();
-        //    }
-        //}
-
-        //private async Task DrawEraser(Context2D context, DrawPoint point)
-        //{
-        //    await using (Batch2D batch = context.CreateBatch())
-        //    {
-        //        await Set(batch, point);
-        //        await batch.BeginPathAsync();
-        //        await batch.MoveToAsync(point.StartX, point.StartY);
-        //        await batch.LineToAsync(point.EndX, point.EndY);
-        //        await batch.StrokeAsync();
-        //    }
-        //}
 
         private async Task DrawLine(Context2D context, DrawPoint point, bool transfer)
         {
