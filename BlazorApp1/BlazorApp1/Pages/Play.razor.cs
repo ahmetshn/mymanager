@@ -85,54 +85,54 @@ namespace BlazorApp1.Pages
 
             _timer = new System.Timers.Timer();
             _timer.Interval = 1;
-            _timer.Elapsed += OnTimedEvent;
+            //_timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = true;
 
             _tick = 0;
         }
 
-        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
-        {
-            _tick++;
-            Console.WriteLine(" Ticks  : {0} ", _tick);
-            //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
-            //Console.WriteLine(" Event  : {0} ", e.SignalTime);
+        //private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        //{
+        //    _tick++;
+        //    Console.WriteLine(" Ticks  : {0} ", _tick);
+        //    //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
+        //    //Console.WriteLine(" Event  : {0} ", e.SignalTime);
 
-            if (_play)
-            {
-                var drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
+        //    if (_play)
+        //    {
+        //        var drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
 
-                var removerPoints = drawPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick && x.Tool == "undo")).ToList();
+        //        var removerPoints = drawPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick && x.Tool == "undo")).ToList();
 
-                if (removerPoints.Count > 0)
-                {
-                    foreach (var drawPoint in removerPoints)
-                    {
-                        foreach (var item in drawPoint.DrawPoints)
-                        {
-                            Console.WriteLine("Tool =" + item.Tool);
-                        }
-                    }
+        //        if (removerPoints.Count > 0)
+        //        {
+        //            foreach (var drawPoint in removerPoints)
+        //            {
+        //                foreach (var item in drawPoint.DrawPoints)
+        //                {
+        //                    Console.WriteLine("Tool =" + item.Tool);
+        //                }
+        //            }
 
-                    var index = _currentPlayAllPoints.IndexOf(removerPoints[0]);
+        //            var index = _currentPlayAllPoints.IndexOf(removerPoints[0]);
 
-                    _currentPlayAllPoints.RemoveAt(index);
+        //            _currentPlayAllPoints.RemoveAt(index);
 
-                    _currentPlayAllPoints.RemoveAt(index - 1);
+        //            _currentPlayAllPoints.RemoveAt(index - 1);
 
-                    _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                    drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick < _tick)).ToList();
-                }
+        //            _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+        //            drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick < _tick)).ToList();
+        //        }
 
-                //Console.WriteLine(drawPoints.Count);
-                DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
-            }
-        }
+        //        //Console.WriteLine(drawPoints.Count);
+        //        DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
+        //    }
+        //}
 
         private DrawPoint GetDrawPoint()
         {
             DrawPoint drawPoint = new DrawPoint();
-            drawPoint.Tick = _tick;
+            //drawPoint.Tick = _tick;
             drawPoint.Tool = _tool;
             drawPoint.StartX = mousex;
             drawPoint.StartY = mousey;

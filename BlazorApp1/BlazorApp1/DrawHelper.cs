@@ -13,6 +13,39 @@ namespace BlazorApp1
             await context.LineJoinAsync(drawPoint.LineJoin);
         }
 
+        public static async Task ReDraw(Context2D context, DrawPointList allPoints, double width, double height)
+        {
+            foreach (var point in allPoints.DrawPoints)
+            {
+                point.LineColor = "orange";
+
+                if (point.Tool == "pencil")
+                {
+                    await DrawLine(context, point, width, height, false);
+                }
+                else if (point.Tool == "marker")
+                {
+                    await DrawLine(context, point, width, height, false);
+                }
+                else if (point.Tool == "eraser")
+                {
+                    await DrawLine(context, point, width, height, false);
+                }
+                else if (point.Tool == "line")
+                {
+                    await DrawLine(context, point, width, height, false);
+                }
+                else if (point.Tool == "arrow")
+                {
+                    await DrawArrow(context, point, width, height, false);
+                }
+                else if (point.Tool == "rectangle")
+                {
+                    await DrawRectangle(context, point, width, height, false);
+                }
+            }
+        }
+
         public static async Task ReDraw(Context2D context, IList<DrawPointList> allPoints, double width, double height)
         {
             foreach (var points in allPoints)

@@ -16,6 +16,7 @@ namespace BlazorApp1.Pages
         private IList<DrawPointList> _playAllPoints;
         private IList<DrawPointList> _reDrawAllPoints;
 
+        private DrawPointList _drawPointList;
         private IList<DrawPoint> _points;
         private ElementReference _container;
         private Canvas _tempCanvas;
@@ -58,7 +59,8 @@ namespace BlazorApp1.Pages
         private LineCap _lineCap { get; set; }
         private LineJoin _lineJoin { get; set; }
 
-        private System.Timers.Timer _timer;
+        private PeriodicTimer _timerRecorder;
+        private PeriodicTimer _timerPlayer;
         private long _tick;
         //private PeriodicTimer _timer { get; set; }
 
@@ -80,11 +82,6 @@ namespace BlazorApp1.Pages
 
             _reDrawAllPoints = new List<DrawPointList>();
             _playAllPoints = new List<DrawPointList>();
-
-            _timer = new System.Timers.Timer();
-            _timer.Interval = 1;
-            _timer.Elapsed += OnTimedEvent;
-            _timer.AutoReset = true;
 
             _tick = 0;
         }
@@ -213,6 +210,9 @@ namespace BlazorApp1.Pages
 
             this.mousedown = true;
 
+            _drawPointList = new DrawPointList();
+            _drawPointList.Tick = _tick;
+
             _points = new List<DrawPoint>();
         }
 
@@ -260,10 +260,9 @@ namespace BlazorApp1.Pages
             last_mousex = 0;
             last_mousey = 0;
 
-            DrawPointList drawPointList = new DrawPointList();
-            drawPointList.DrawPoints = _points;
-            _reDrawAllPoints.Add(drawPointList);
-            _playAllPoints.Add(drawPointList);
+            _drawPointList.DrawPoints = _points;
+            _reDrawAllPoints.Add(_drawPointList);
+            _playAllPoints.Add(_drawPointList);
             _points = null;
         }
 
@@ -434,38 +433,89 @@ namespace BlazorApp1.Pages
 
         private async Task Start()
         {
-            _timer.Enabled = true;
-            _timer.Start();
+            //_timer.Enabled = true;
+            //_timer.Start();
+
+            _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
+
+            while (await _timerRecorder.WaitForNextTickAsync())
+            {
+                _tick++;
+            }
         }
 
         private async Task Stop()
         {
-            _timer.Enabled = false;
-            _timer.Stop();
+            //_timer.Enabled = false;
+            //_timer.Stop();
+
         }
 
         private async Task Play()
         {
+            _timerRecorder.Dispose();
+
             DrawPointList[] array = new DrawPointList[_playAllPoints.Count];
             _playAllPoints.CopyTo(array, 0);
 
             _currentPlayAllPoints = new List<DrawPointList>();
             _currentPlayAllPoints = array.ToList();
 
-            foreach (var points in _currentPlayAllPoints)
-            {
-                foreach (var point in points.DrawPoints)
-                {
-                    Console.WriteLine(string.Format("Tick = {0} Tool = {1}", point.Tick, point.Tool));
-                }
-            }
+            //foreach (var points in _currentPlayAllPoints)
+            //{
+            //    foreach (var point in points.DrawPoints)
+            //    {
+            //        Console.WriteLine(string.Format("Tick = {0} Tool = {1}", point.Tick, point.Tool));
+            //    }
+            //}
 
             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
+            //Console.Error.WriteLine("_tick = {0}", _tick);
             _tick = 0;
             _play = true;
-            _timer.Enabled = true;
-            _timer.Start();
+            //_timer.Enabled = true;
+            //_timer.Start();
+
+            _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
+
+            _drawPointList = new DrawPointList();
+            _drawPointList.Tick = -1;
+            _drawPointList.DrawPoints = new List<DrawPoint>();
+
+            while (await _timerRecorder.WaitForNextTickAsync())
+            {
+                _tick++;
+                //Console.WriteLine("_tick = {0}", _tick);
+
+                var i = 0;
+
+                if (_drawPointList != null)
+                {
+                    var drawPointList = _drawPointList.DrawPoints.Where(p => p.Tick == _tick).ToList();
+
+                    DrawHelper.ReDraw(_mainContext, new DrawPointList { DrawPoints = drawPointList }, _position.Width, _position.Height);
+                }
+
+                //using (PeriodicTimer p = new PeriodicTimer(TimeSpan.FromMilliseconds(1)))
+                //{
+                //    while (await _timerRecorder.WaitForNextTickAsync() && i < drawPoints.Count())
+                //    {
+                //        DrawHelper.ReDraw(_mainContext, drawPoints[i], _position.Width, _position.Height);
+
+                //        i++;
+                //    }
+                //}
+
+                var tmp = _currentPlayAllPoints.FirstOrDefault(p => p.Tick == _tick);
+                if (tmp != null)
+                    _drawPointList = tmp;
+
+                //Console.WriteLine(drawPoints.Count);
+                //DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
+            }
+
+            _timerRecorder.Dispose();
         }
 
         private async Task Serilaze()
