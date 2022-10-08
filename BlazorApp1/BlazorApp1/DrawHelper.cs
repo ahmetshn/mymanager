@@ -15,9 +15,12 @@ namespace BlazorApp1
 
         public static async Task ReDraw(Context2D context, DrawPointList allPoints, double width, double height)
         {
+            int counter = 0;
+
             foreach (var point in allPoints.DrawPoints)
             {
-                point.LineColor = "orange";
+                counter++;
+                //point.LineColor = "orange";
 
                 if (point.Tool == "pencil")
                 {
@@ -43,6 +46,38 @@ namespace BlazorApp1
                 {
                     await DrawRectangle(context, point, width, height, false);
                 }
+                else if (point.Tool == "undo")
+                {
+                    DrawPointList dpl = new DrawPointList();
+                    dpl.Tick = allPoints.Tick;
+                    dpl.DrawPoints = new List<DrawPoint>();
+
+                    var tmp = 0;
+
+                    foreach (var item in allPoints.DrawPoints)
+                    {
+                        tmp++;
+
+                        if (tmp == (counter - 1))
+                            break;
+
+                        Console.WriteLine("item.Tool = {0}", item.Tool);
+                        dpl.DrawPoints.Add(item);
+                    }
+
+                    Console.WriteLine("point.Tool = {0}", point.Tool);
+                    Console.WriteLine("allPoints.DrawPoints.Count = {0}", allPoints.DrawPoints.Count);
+                    Console.WriteLine("dpl.DrawPoints.Count = {0}", dpl.DrawPoints.Count);
+
+                    await context.ClearRectAsync(0, 0, width, height);
+                    await ReDraw(context, dpl, width, height);
+
+                    //point.LineColor = "white";
+
+                    //allPoints.DrawPoints.Where(p => p.Tick < point.Tick && p.Tool != "undo").OrderByDescending(p=>p.Tick).FirstOrDefault();
+
+                    //await DrawRectangle(context, point, width, height, false);
+                }
             }
         }
 
@@ -52,7 +87,7 @@ namespace BlazorApp1
             {
                 foreach (var point in points.DrawPoints)
                 {
-                    point.LineColor = "orange";
+                    //point.LineColor = "orange";
 
                     if (point.Tool == "pencil")
                     {

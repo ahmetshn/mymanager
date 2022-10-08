@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace BlazorApp1.Pages
 {
@@ -212,6 +213,7 @@ namespace BlazorApp1.Pages
 
             _drawPointList = new DrawPointList();
             _drawPointList.Tick = _tick;
+            _drawPointList.Tool = _tool;
 
             _points = new List<DrawPoint>();
         }
@@ -379,7 +381,10 @@ namespace BlazorApp1.Pages
                     DrawPointList drawPointList = new DrawPointList();
                     drawPointList.DrawPoints = new List<DrawPoint>();
                     drawPointList.DrawPoints.Add(drawPoint);
-
+                    drawPoint.Tick = _tick;
+                    drawPointList.Tick = _tick;
+                    drawPointList.Tool = "undo";
+                    
                     _playAllPoints.Add(drawPointList);
                 }
 
@@ -453,6 +458,9 @@ namespace BlazorApp1.Pages
 
         private async Task Play()
         {
+            long max = _tick;
+            long undoMax = 0;
+
             _timerRecorder.Dispose();
 
             DrawPointList[] array = new DrawPointList[_playAllPoints.Count];
@@ -460,14 +468,6 @@ namespace BlazorApp1.Pages
 
             _currentPlayAllPoints = new List<DrawPointList>();
             _currentPlayAllPoints = array.ToList();
-
-            //foreach (var points in _currentPlayAllPoints)
-            //{
-            //    foreach (var point in points.DrawPoints)
-            //    {
-            //        Console.WriteLine(string.Format("Tick = {0} Tool = {1}", point.Tick, point.Tool));
-            //    }
-            //}
 
             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
@@ -479,22 +479,89 @@ namespace BlazorApp1.Pages
 
             _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
 
+
             _drawPointList = new DrawPointList();
             _drawPointList.Tick = -1;
             _drawPointList.DrawPoints = new List<DrawPoint>();
 
+            List<DrawPointList> undoDraw = new List<DrawPointList>();
+
             while (await _timerRecorder.WaitForNextTickAsync())
             {
                 _tick++;
-                //Console.WriteLine("_tick = {0}", _tick);
+                // Console.WriteLine("_tick = {0}", _tick);
 
                 var i = 0;
+
+                var tmp = _currentPlayAllPoints.FirstOrDefault(p => p.Tick == _tick);
+                if (tmp != null)
+                    _drawPointList = tmp;
+
+                //Console.WriteLine("Max = {0} Tick = {1}", max, _tick);
+
+                if (max == _tick)
+                {
+                    Console.WriteLine("Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose");
+
+                    _timerRecorder.Dispose();
+                }
 
                 if (_drawPointList != null)
                 {
                     var drawPointList = _drawPointList.DrawPoints.Where(p => p.Tick == _tick).ToList();
 
-                    DrawHelper.ReDraw(_mainContext, new DrawPointList { DrawPoints = drawPointList }, _position.Width, _position.Height);
+                    if (drawPointList.Any())
+                    {
+                        bool b = !drawPointList.Any(p => p.Tool == "undo");
+
+                        //foreach (var drawPoint in drawPointList)
+                        //{
+                        //    if (drawPoint.Tool == "undo")
+                        //    {
+                        //        //Console.WriteLine("x.Tool V2 = {0}", drawPoint.Tool);
+                        //        b = false;
+                        //        break;
+                        //    }
+                        //}
+
+                        if (b)
+                        {
+                            DrawPointList d = new DrawPointList { DrawPoints = drawPointList };
+
+                            DrawHelper.ReDraw(_mainContext, d, _position.Width, _position.Height);
+                        }
+                        else
+                        {
+                            
+                            await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+
+                            if (!undoDraw.Any())
+                            {
+                                undoDraw = _currentPlayAllPoints.Where(p => p.Tick < _tick && p.Tool != "undo").ToList();
+                                //Console.WriteLine("ANY undoDraw.Count = {0}", undoDraw.Count);
+                            }
+                            else
+                            {
+                                //Console.WriteLine("BEFORE undoDraw.Count = {0}", undoDraw.Count);
+                                undoDraw.AddRange(_currentPlayAllPoints.Where(p => p.Tick > undoMax && p.Tick < _tick && p.Tool != "undo").ToList());
+                                //Console.WriteLine("AFTER undoDraw.Count = {0}", undoDraw.Count);
+                            }
+
+                            undoMax = _tick;
+                            undoMax++;
+
+                            //Console.WriteLine("undoMax = {0}", undoMax);
+
+                            undoDraw.RemoveAt(undoDraw.Count - 1);
+                            //Console.WriteLine("undoDraw.Count = {0}", undoDraw.Count);
+
+                            var str = JsonConvert.SerializeObject(undoDraw);
+                            //Console.WriteLine(str);
+
+
+                            DrawHelper.ReDraw(_mainContext, undoDraw, _position.Width, _position.Height);
+                        }
+                    }
                 }
 
                 //using (PeriodicTimer p = new PeriodicTimer(TimeSpan.FromMilliseconds(1)))
@@ -506,10 +573,6 @@ namespace BlazorApp1.Pages
                 //        i++;
                 //    }
                 //}
-
-                var tmp = _currentPlayAllPoints.FirstOrDefault(p => p.Tick == _tick);
-                if (tmp != null)
-                    _drawPointList = tmp;
 
                 //Console.WriteLine(drawPoints.Count);
                 //DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
