@@ -103,10 +103,18 @@ function createDownloadLink(blob) {
 	var url = URL.createObjectURL(blob);
 
 	var au = document.getElementById('myAudio');
-	
+
+	var link = document.getElementById('donwloadLink');
 	//add controls to the <audio> element
 	au.controls = true;
 	au.src = url;
+
+	var filename = new Date().toISOString();
+
+	//save to disk link
+	link.href = url;
+	link.download = filename + ".wav"; //download forces the browser to donwload the file using the  filename
+	link.innerHTML = "Save to disk";
 }
 
 

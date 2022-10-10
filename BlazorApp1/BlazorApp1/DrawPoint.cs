@@ -4,7 +4,7 @@ namespace BlazorApp1
 {
     public class DrawPoint
     {
-        public long Tick { get; set; }
+        public TimeSpan Tick { get; set; }
 
         public string Tool { get; set; }
 

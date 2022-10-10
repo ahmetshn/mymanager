@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
+using System.Timers;
 
 namespace BlazorApp1.Pages
 {
@@ -62,7 +65,7 @@ namespace BlazorApp1.Pages
 
         private PeriodicTimer _timerRecorder;
         private PeriodicTimer _timerPlayer;
-        private long _tick;
+        private TimeSpan _tick;
         //private PeriodicTimer _timer { get; set; }
 
         private bool _play;
@@ -84,45 +87,7 @@ namespace BlazorApp1.Pages
             _reDrawAllPoints = new List<DrawPointList>();
             _playAllPoints = new List<DrawPointList>();
 
-            _tick = 0;
-        }
-
-        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
-        {
-            _tick++;
-            //Console.WriteLine(" Ticks  : {0} ", _tick);
-            //Console.WriteLine(" Ticks  : {0} ", e.SignalTime.Ticks - _tick);
-            //Console.WriteLine(" Event  : {0} ", e.SignalTime);
-
-            if (_play)
-            {
-                var drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick)).ToList();
-
-                var removerPoints = drawPoints.Where(p => p.DrawPoints.Any(x => x.Tick == _tick && x.Tool == "undo")).ToList();
-
-                if (removerPoints.Count > 0)
-                {
-                    foreach (var drawPoint in removerPoints)
-                    {
-                        foreach (var item in drawPoint.DrawPoints)
-                        {
-                            Console.WriteLine("Tool =" + item.Tool);
-                        }
-                    }
-
-                    var index = _currentPlayAllPoints.IndexOf(removerPoints[0]);
-
-                    _currentPlayAllPoints.RemoveAt(index);
-
-                    _currentPlayAllPoints.RemoveAt(index - 1);
-
-                    _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
-                    drawPoints = _currentPlayAllPoints.Where(p => p.DrawPoints.Any(x => x.Tick < _tick)).ToList();
-                }
-
-                //Console.WriteLine(drawPoints.Count);
-                DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
-            }
+            _tick = TimeSpan.Zero;
         }
 
         private DrawPoint GetDrawPoint()
@@ -438,21 +403,13 @@ namespace BlazorApp1.Pages
 
         private async Task Start()
         {
-            //_timer.Enabled = true;
-            //_timer.Start();
-
-
-            _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
+            StartTimer();
             await JS.InvokeVoidAsync("startRecording");
-
-            while (await _timerRecorder.WaitForNextTickAsync())
-            {
-                _tick++;
-            }
         }
 
         private async Task Stop()
         {
+            StopTimer();
             await JS.InvokeVoidAsync("stopRecording");
 
             //_timer.Enabled = false;
@@ -460,13 +417,12 @@ namespace BlazorApp1.Pages
 
         }
 
+        private List<DrawPoint> dps;
+        private TimeSpan _befoereTimeSpan;
+
         private async Task Play()
         {
-
-            long max = _tick;
-            long undoMax = 0;
-
-            _timerRecorder.Dispose();
+            _befoereTimeSpan = TimeSpan.Zero;
 
             DrawPointList[] array = new DrawPointList[_playAllPoints.Count];
             _playAllPoints.CopyTo(array, 0);
@@ -474,119 +430,24 @@ namespace BlazorApp1.Pages
             _currentPlayAllPoints = new List<DrawPointList>();
             _currentPlayAllPoints = array.ToList();
 
-            await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+            dps = new List<DrawPoint>();
 
-            //Console.Error.WriteLine("_tick = {0}", _tick);
-            _tick = 0;
-            _play = true;
-            //_timer.Enabled = true;
-            //_timer.Start();
-
-            _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
-
-
-            _drawPointList = new DrawPointList();
-            _drawPointList.Tick = -1;
-            _drawPointList.DrawPoints = new List<DrawPoint>();
-
-            List<DrawPointList> undoDraw = new List<DrawPointList>();
-            await JS.InvokeVoidAsync("playSound");
-
-            while (await _timerRecorder.WaitForNextTickAsync())
+            foreach (var item in _currentPlayAllPoints)
             {
-                _tick++;
-                // Console.WriteLine("_tick = {0}", _tick);
-
-                var i = 0;
-
-                var tmp = _currentPlayAllPoints.FirstOrDefault(p => p.Tick == _tick);
-                if (tmp != null)
-                    _drawPointList = tmp;
-
-                //Console.WriteLine("Max = {0} Tick = {1}", max, _tick);
-
-                if (max == _tick)
-                {
-                    Console.WriteLine("Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose - Dispose");
-
-                    _timerRecorder.Dispose();
-                }
-
-                if (_drawPointList != null)
-                {
-                    var drawPointList = _drawPointList.DrawPoints.Where(p => p.Tick == _tick).ToList();
-
-                    if (drawPointList.Any())
-                    {
-                        bool b = !drawPointList.Any(p => p.Tool == "undo");
-
-                        Console.WriteLine("drawPointList.Count = {0} ticK= {1}", drawPointList.Count, _tick);
-
-                        //foreach (var drawPoint in drawPointList)
-                        //{
-                        //    if (drawPoint.Tool == "undo")
-                        //    {
-                        //        //Console.WriteLine("x.Tool V2 = {0}", drawPoint.Tool);
-                        //        b = false;
-                        //        break;
-                        //    }
-                        //}
-
-                        if (b)
-                        {
-                            DrawPointList d = new DrawPointList { DrawPoints = drawPointList };
-
-                            DrawHelper.ReDraw(_mainContext, d, _position.Width, _position.Height);
-                        }
-                        else
-                        {
-
-                            await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
-
-                            if (!undoDraw.Any())
-                            {
-                                undoDraw = _currentPlayAllPoints.Where(p => p.Tick < _tick && p.Tool != "undo").ToList();
-                                //Console.WriteLine("ANY undoDraw.Count = {0}", undoDraw.Count);
-                            }
-                            else
-                            {
-                                //Console.WriteLine("BEFORE undoDraw.Count = {0}", undoDraw.Count);
-                                undoDraw.AddRange(_currentPlayAllPoints.Where(p => p.Tick > undoMax && p.Tick < _tick && p.Tool != "undo").ToList());
-                                //Console.WriteLine("AFTER undoDraw.Count = {0}", undoDraw.Count);
-                            }
-
-                            undoMax = _tick;
-                            undoMax++;
-
-                            //Console.WriteLine("undoMax = {0}", undoMax);
-
-                            undoDraw.RemoveAt(undoDraw.Count - 1);
-                            //Console.WriteLine("undoDraw.Count = {0}", undoDraw.Count);
-
-                            var str = JsonConvert.SerializeObject(undoDraw);
-                            //Console.WriteLine(str);
-
-
-                            DrawHelper.ReDraw(_mainContext, undoDraw, _position.Width, _position.Height);
-                        }
-                    }
-                }
-
-                //using (PeriodicTimer p = new PeriodicTimer(TimeSpan.FromMilliseconds(1)))
-                //{
-                //    while (await _timerRecorder.WaitForNextTickAsync() && i < drawPoints.Count())
-                //    {
-                //        DrawHelper.ReDraw(_mainContext, drawPoints[i], _position.Width, _position.Height);
-
-                //        i++;
-                //    }
-                //}
-
-                //Console.WriteLine(drawPoints.Count);
-                //DrawHelper.ReDraw(_mainContext, drawPoints, _position.Width, _position.Height);
+                dps.AddRange(item.DrawPoints);
             }
 
-            _timerRecorder.Dispose();
+            await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
+
+            await JS.InvokeVoidAsync("playSound");
+
+            _tick = TimeSpan.Zero;
+            startTime = DateTime.Now;
+            timerPlay = new System.Timers.Timer(1);
+            timerPlay.Elapsed += OnPlayTimedEvent;
+            timerPlay.AutoReset = true;
+            timerPlay.Enabled = true;
+            isRunning = true;
         }
 
         private async Task Serilaze()
@@ -594,6 +455,59 @@ namespace BlazorApp1.Pages
             var str = JsonConvert.SerializeObject(_playAllPoints);
             Console.WriteLine(str);
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", str);
+        }
+
+
+        const string DEFAULT_TIME = "00:00:00";
+        string elapsedTime = DEFAULT_TIME;
+        System.Timers.Timer timerRecord = new System.Timers.Timer(1);
+        System.Timers.Timer timerPlay = new System.Timers.Timer(1);
+        DateTime startTime = DateTime.Now;
+        bool isRunning = false;
+
+        private void OnRecordTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            DateTime currentTime = e.SignalTime;
+            _tick = currentTime.Subtract(startTime);
+            elapsedTime = $"{_tick}";
+            StateHasChanged();
+        }
+
+        void StartTimer()
+        {
+            startTime = DateTime.Now;
+            timerRecord = new System.Timers.Timer(1);
+            timerRecord.Elapsed += OnRecordTimedEvent;
+            timerRecord.AutoReset = true;
+            timerRecord.Enabled = true;
+            isRunning = true;
+        }
+
+        void StopTimer()
+        {
+            isRunning = false;
+            Console.WriteLine($"Elapsed Time: {elapsedTime}");
+            timerRecord.Enabled = false;
+            //elapsedTime = DEFAULT_TIME;
+            timerPlay.Enabled = false;
+        }
+
+
+
+        private void OnPlayTimedEvent(Object source, ElapsedEventArgs e)
+        {
+
+            DateTime currentTime = e.SignalTime;
+            _tick = currentTime.Subtract(startTime);
+            elapsedTime = $"{_tick}";
+
+
+            IList<DrawPoint> drawPointList = dps.Where(p => p.Tick >= _befoereTimeSpan && p.Tick <= _tick).ToList();
+
+            DrawHelper.ReDraw(_mainContext, new DrawPointList { DrawPoints = drawPointList }, _position.Width, _position.Height);
+
+            _befoereTimeSpan = _tick;
+            StateHasChanged();
         }
     }
 }

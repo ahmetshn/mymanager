@@ -2,7 +2,7 @@
 {
     public class DrawPointList
     {
-        public long Tick { get; set; }
+        public TimeSpan Tick { get; set; }
 
         public IList<DrawPoint> DrawPoints { get; set; }
 
