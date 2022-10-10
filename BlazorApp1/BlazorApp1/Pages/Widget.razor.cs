@@ -384,7 +384,7 @@ namespace BlazorApp1.Pages
                     drawPoint.Tick = _tick;
                     drawPointList.Tick = _tick;
                     drawPointList.Tool = "undo";
-                    
+
                     _playAllPoints.Add(drawPointList);
                 }
 
@@ -441,7 +441,9 @@ namespace BlazorApp1.Pages
             //_timer.Enabled = true;
             //_timer.Start();
 
+
             _timerRecorder = new PeriodicTimer(TimeSpan.FromMilliseconds(1));
+            await JS.InvokeVoidAsync("startRecording");
 
             while (await _timerRecorder.WaitForNextTickAsync())
             {
@@ -451,6 +453,8 @@ namespace BlazorApp1.Pages
 
         private async Task Stop()
         {
+            await JS.InvokeVoidAsync("stopRecording");
+
             //_timer.Enabled = false;
             //_timer.Stop();
 
@@ -458,6 +462,7 @@ namespace BlazorApp1.Pages
 
         private async Task Play()
         {
+
             long max = _tick;
             long undoMax = 0;
 
@@ -485,6 +490,7 @@ namespace BlazorApp1.Pages
             _drawPointList.DrawPoints = new List<DrawPoint>();
 
             List<DrawPointList> undoDraw = new List<DrawPointList>();
+            await JS.InvokeVoidAsync("playSound");
 
             while (await _timerRecorder.WaitForNextTickAsync())
             {
@@ -514,6 +520,8 @@ namespace BlazorApp1.Pages
                     {
                         bool b = !drawPointList.Any(p => p.Tool == "undo");
 
+                        Console.WriteLine("drawPointList.Count = {0} ticK= {1}", drawPointList.Count, _tick);
+
                         //foreach (var drawPoint in drawPointList)
                         //{
                         //    if (drawPoint.Tool == "undo")
@@ -532,7 +540,7 @@ namespace BlazorApp1.Pages
                         }
                         else
                         {
-                            
+
                             await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
                             if (!undoDraw.Any())
