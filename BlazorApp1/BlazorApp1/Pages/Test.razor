@@ -1,0 +1,39 @@
+﻿@page "/test"
+@using Microsoft.JSInterop
+@inject IJSRuntime js
+
+<h3>DrawingImage (Immediately on render)</h3>
+
+For more information, please visit <a href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D">https://developer.mozilla.org/</a>.
+
+<hr />
+<img id="castle" width="3840" height="2160" style="display:none" />
+
+<hr />
+<Canvas @ref="canvas" width="384px" height="216px" style="border: 5px solid red" />
+
+@code {
+    private Canvas canvas;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await js.InvokeVoidAsync("loadImage", DotNetObjectReference.Create(this), "castle", "https://upload.wikimedia.org/wikipedia/commons/4/45/Nagoya_Castle%28Larger%29.jpg");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    [JSInvokable]
+    public async Task UpdateCanvasAsync()
+    {
+        await js.InvokeVoidAsync("eval", "myimage = document.getElementById('castle')");
+        await using (var ctx = await canvas.GetContext2DAsync())
+        {
+            await ctx.ClearRectAsync(0, 0, 384, 216);
+            await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+            await ctx.RestoreAsync();
+            await ctx.SaveAsync();
+            await ctx.DrawImageAsync("myimage", 0, 0, 3840, 2160, 0, 0, 384, 216);
+        }
+    }
+}

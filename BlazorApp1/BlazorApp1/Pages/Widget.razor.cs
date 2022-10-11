@@ -107,6 +107,7 @@ namespace BlazorApp1.Pages
             return drawPoint;
         }
 
+        private Canvas canvas;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
@@ -116,6 +117,8 @@ namespace BlazorApp1.Pages
                 objects[0] = obj;
 
                 _position = await JS.InvokeAsync<Position>("eval", objects);
+                _position.Width = _position.Width - 50;
+
                 _width = _position.Width.ToString("N0").Replace(",", string.Empty).Replace(".", string.Empty);
                 _height = _position.Height.ToString("N0").Replace(",", string.Empty).Replace(".", string.Empty);
 
@@ -144,11 +147,21 @@ namespace BlazorApp1.Pages
                 await _mainContext.LineCapAsync(LineCap.Round);
                 // this retrieves the top left corner of the canvas container (which is equivalent to the top left corner of the canvas, as we don't have any margins / padding)
 
-                _mainCanvas.AdditionalAttributes.Add("style", "z-index:15;");
-                _tempCanvas.AdditionalAttributes.Add("style", "z-index:5;");
+                //string style = "background-image:url('https://upload.wikimedia.org/wikipedia/commons/4/45/Nagoya_Castle%28Larger%29.jpg');background-repeat:no-repeat;background-position:top left; background-size:384px 216px;";
 
+                object style;
+                _tempCanvas.AdditionalAttributes.TryGetValue("style", out style);
+
+                _mainCanvas.AdditionalAttributes.Remove("style");
+                _tempCanvas.AdditionalAttributes.Remove("style");
+
+                _mainCanvas.AdditionalAttributes.Add("style", style.ToString() + "z-index:15;");
+                _tempCanvas.AdditionalAttributes.Add("style", style.ToString() + "z-index:5;");
+
+                await _mainContext.ClearRectAsync(0, 0, _position.Width, _position.Height);
 
                 _activeContext = _mainContext;
+
             }
         }
 
@@ -161,6 +174,8 @@ namespace BlazorApp1.Pages
             }
             return base.ShouldRender();
         }
+
+        #region Mouse 
 
         private void MouseDownCanvas(MouseEventArgs e)
         {
@@ -331,6 +346,160 @@ namespace BlazorApp1.Pages
 
         }
 
+        #endregion
+
+        #region Touch
+
+        private void TouchDownCanvas(TouchEventArgs e)
+        {
+            TouchPoint touchPoint = e.TargetTouches[0];
+
+            var clientX = touchPoint.ClientX;
+            var clientY = touchPoint.ClientY;
+
+            render_required = false;
+
+            last_mousex = mousex = clientX - canvasx;
+            last_mousey = mousey = clientY - canvasy;
+            start_mousex = clientX - canvasx;
+            start_mousey = clientY - canvasy;
+
+            this.mousedown = true;
+
+            _drawPointList = new DrawPointList();
+            _drawPointList.Tick = _tick;
+            _drawPointList.Tool = _tool;
+
+            _points = new List<DrawPoint>();
+        }
+
+        private async Task TouchUpCanvas(TouchEventArgs e)
+        {
+            render_required = false;
+            mousedown = false;
+
+            if (_transfer)
+            {
+                if (_tool == "line")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Round;
+                    _lineJoin = LineJoin.Round;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawLine(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+                else if (_tool == "arrow")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Round;
+                    _lineJoin = LineJoin.Round;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawArrow(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+                else if (_tool == "rectangle")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Square;
+                    _lineJoin = LineJoin.Bevel;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawRectangle(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+            }
+
+            await using (var context = _tempContext.CreateBatch())
+            {
+                await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
+            }
+
+            last_mousex = 0;
+            last_mousey = 0;
+
+            _drawPointList.DrawPoints = _points;
+            _reDrawAllPoints.Add(_drawPointList);
+            _playAllPoints.Add(_drawPointList);
+            _points = null;
+
+            //render_required = false;
+            //mousedown = false;
+
+            //last_mousex = 0;
+            //last_mousey = 0;
+        }
+
+
+        async Task TouchMoveCanvasAsync(TouchEventArgs e)
+        {
+            render_required = false;
+            mousedown = false;
+
+            if (_transfer)
+            {
+                if (_tool == "line")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Round;
+                    _lineJoin = LineJoin.Round;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawLine(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+                else if (_tool == "arrow")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Round;
+                    _lineJoin = LineJoin.Round;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawArrow(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+                else if (_tool == "rectangle")
+                {
+                    _globalAlpha = 1;
+                    _lineCap = LineCap.Square;
+                    _lineJoin = LineJoin.Bevel;
+                    DrawPoint drawPoint = GetDrawPoint();
+                    _points.Add(drawPoint);
+                    await DrawHelper.DrawRectangle(_mainContext, drawPoint, _position.Width, _position.Height, false);
+                }
+            }
+
+            await using (var context = _tempContext.CreateBatch())
+            {
+                await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
+            }
+
+            last_mousex = 0;
+            last_mousey = 0;
+
+            _drawPointList.DrawPoints = _points;
+            _reDrawAllPoints.Add(_drawPointList);
+            _playAllPoints.Add(_drawPointList);
+            _points = null;
+
+            //TouchPoint touchPoint = e.TargetTouches[e.TargetTouches.Length - 1];
+
+            //var clientX = touchPoint.ClientX;
+            //var clientY = touchPoint.ClientY;
+
+            //render_required = false;
+            //if (!mousedown)
+            //{
+            //    return;
+            //}
+            //mousex = clientX - canvasx;
+            //mousey = clientY - canvasy;
+            ////await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
+
+            //last_mousex = mousex;
+            //last_mousey = mousey;
+        }
+
+
+        #endregion 
+
         private async Task ChangeTool(string tool, bool transfer, bool showLineWidth, bool showLineColor, bool showFillColor)
         {
             if (tool == "undo")
@@ -456,7 +625,6 @@ namespace BlazorApp1.Pages
             Console.WriteLine(str);
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", str);
         }
-
 
         const string DEFAULT_TIME = "00:00:00";
         string elapsedTime = DEFAULT_TIME;

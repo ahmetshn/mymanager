@@ -200,5 +200,18 @@ namespace BlazorApp1
                 }
             }
         }
+
+        public static async Task DrawImage(Context2D context, DrawPoint point, double width, double height,string image, bool transfer)
+        {
+            await using (Batch2D batch = context.CreateBatch())
+            {
+                await Set(batch, point);
+
+                if (transfer)
+                    await batch.ClearRectAsync(0, 0, width, height);
+
+                await batch.DrawImageAsync(image, width, height);
+            }
+        }
     }
 }
