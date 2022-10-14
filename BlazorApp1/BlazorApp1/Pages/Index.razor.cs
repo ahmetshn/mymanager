@@ -100,6 +100,8 @@ namespace BlazorApp1.Pages
 
         private void TouchDownCanvas(TouchEventArgs e)
         {
+            Console.WriteLine("TouchDownCanvas");
+
             TouchPoint touchPoint = e.TargetTouches[0];
 
             var clientX = touchPoint.ClientX;
@@ -125,6 +127,8 @@ namespace BlazorApp1.Pages
 
         private void TouchUpCanvas(TouchEventArgs e)
         {
+            Console.WriteLine("TouchUpCanvas");
+
             render_required = false;
             mousedown = false;
 
@@ -152,6 +156,10 @@ namespace BlazorApp1.Pages
 
             var clientX = touchPoint.ClientX;
             var clientY = touchPoint.ClientY;
+
+            Console.WriteLine("TouchMoveCanvasAsync");
+
+            Console.WriteLine($"clientX = {clientX} clientY = {clientY} canvasx={canvasx} canvasy={canvasy}");
 
             render_required = false;
             if (!mousedown)
@@ -183,7 +191,7 @@ namespace BlazorApp1.Pages
                 await using (var ctx2 = ctx1.CreateBatch())
                 {
                     await ctx2.ClearRectAsync(0, 0, 800, 800);
-                    
+
                     await ctx2.StrokeRectAsync(start_mousex, start_mousey, x, y);
                 }
             }

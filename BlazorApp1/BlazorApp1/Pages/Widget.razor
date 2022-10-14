@@ -4,8 +4,8 @@
 <section @ref="_container" class="design-surface" style="margin-left: 50px;">
     <Canvas @ref="_tempCanvas"
             @onmousemove="MouseMoveCanvasAsync"
-             @ontouchmove="TouchMoveCanvasAsync"
-            @onmouseup="MouseUpCanvas" 
+            @ontouchmove="TouchMoveCanvasAsync"
+            @onmouseup="MouseUpCanvas"
             @ontouchend="TouchUpCanvas"
             @onmousedown="MouseDownCanvas"
             @ontouchstart="TouchDownCanvas"
@@ -14,8 +14,11 @@
 
     <Canvas @ref="_mainCanvas"
             @onmousemove="MouseMoveCanvasAsync"
+            @ontouchmove="TouchMoveCanvasAsync"
             @onmouseup="MouseUpCanvas"
+            @ontouchend="TouchUpCanvas"
             @onmousedown="MouseDownCanvas"
+            @ontouchstart="TouchDownCanvas"
             width="@_width" height="@_height"></Canvas>
 </section>
 

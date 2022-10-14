@@ -8,11 +8,12 @@
 <button type="button" @onclick="@(e => ChangeTool("pencil"))">Kalem</button>
 <button type="button" @onclick="@(e => ChangeTool("rectangle"))">Dikdörtgen</button>
 <div @ref="container">
-    <Canvas 
-    
-    @onmousemove="MouseMoveCanvasAsync" @ontouchmove="TouchMoveCanvasAsync"
-            @onmouseup="MouseUpCanvas" @ontouchend="TouchUpCanvas"
-            @onmousedown="MouseDownCanvas" @ontouchstart="TouchDownCanvas"
+    <Canvas @onmousemove="MouseMoveCanvasAsync"
+            @ontouchmove="TouchMoveCanvasAsync"
+            @onmouseup="MouseUpCanvas"
+            @ontouchend="TouchUpCanvas"
+            @onmousedown="MouseDownCanvas"
+            @ontouchstart="TouchDownCanvas"
             width="@_width"
             height="@_height"
             @ref="_context"

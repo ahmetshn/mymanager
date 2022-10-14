@@ -189,6 +189,9 @@ namespace BlazorApp1.Pages
             start_mousex = clientX - canvasx;
             start_mousey = clientY - canvasy;
 
+            Console.WriteLine($"clientX = {clientX} -- clientY = {clientY}");
+            Console.WriteLine($"last_mousex = {last_mousex} -- last_mousey = {last_mousey} start_mousex = {start_mousex} start_mousey = {start_mousey}");
+
             this.mousedown = true;
 
             _drawPointList = new DrawPointList();
@@ -263,6 +266,9 @@ namespace BlazorApp1.Pages
             {
                 mousex = e.ClientX - canvasx;
                 mousey = e.ClientY - canvasy;
+
+                Console.WriteLine($"MouseMoveCanvasAsync clientX = {clientX} -- clientY = {clientY}");
+                Console.WriteLine($"MouseMoveCanvasAsync last_mousex = {last_mousex} -- last_mousey = {last_mousey} start_mousex = {start_mousex} start_mousey = {start_mousey}");
 
                 _globalAlpha = 1;
                 _lineCap = LineCap.Round;
@@ -352,6 +358,8 @@ namespace BlazorApp1.Pages
 
         private void TouchDownCanvas(TouchEventArgs e)
         {
+            Console.WriteLine("TouchDownCanvas");
+
             TouchPoint touchPoint = e.TargetTouches[0];
 
             var clientX = touchPoint.ClientX;
@@ -364,6 +372,9 @@ namespace BlazorApp1.Pages
             start_mousex = clientX - canvasx;
             start_mousey = clientY - canvasy;
 
+            Console.WriteLine($"TouchDownCanvas clientX = {clientX} -- clientY = {clientY}");
+            Console.WriteLine($"TouchDownCanvas last_mousex = {last_mousex} -- last_mousey = {last_mousey} start_mousex = {start_mousex} start_mousey = {start_mousey}");
+
             this.mousedown = true;
 
             _drawPointList = new DrawPointList();
@@ -375,6 +386,8 @@ namespace BlazorApp1.Pages
 
         private async Task TouchUpCanvas(TouchEventArgs e)
         {
+            Console.WriteLine("TouchUpCanvas");
+
             render_required = false;
             mousedown = false;
 
@@ -432,69 +445,106 @@ namespace BlazorApp1.Pages
 
         async Task TouchMoveCanvasAsync(TouchEventArgs e)
         {
+            Console.WriteLine("TouchMoveCanvasAsync");
+
             render_required = false;
-            mousedown = false;
-
-            if (_transfer)
+            if (!mousedown)
             {
-                if (_tool == "line")
-                {
-                    _globalAlpha = 1;
-                    _lineCap = LineCap.Round;
-                    _lineJoin = LineJoin.Round;
-                    DrawPoint drawPoint = GetDrawPoint();
-                    _points.Add(drawPoint);
-                    await DrawHelper.DrawLine(_mainContext, drawPoint, _position.Width, _position.Height, false);
-                }
-                else if (_tool == "arrow")
-                {
-                    _globalAlpha = 1;
-                    _lineCap = LineCap.Round;
-                    _lineJoin = LineJoin.Round;
-                    DrawPoint drawPoint = GetDrawPoint();
-                    _points.Add(drawPoint);
-                    await DrawHelper.DrawArrow(_mainContext, drawPoint, _position.Width, _position.Height, false);
-                }
-                else if (_tool == "rectangle")
-                {
-                    _globalAlpha = 1;
-                    _lineCap = LineCap.Square;
-                    _lineJoin = LineJoin.Bevel;
-                    DrawPoint drawPoint = GetDrawPoint();
-                    _points.Add(drawPoint);
-                    await DrawHelper.DrawRectangle(_mainContext, drawPoint, _position.Width, _position.Height, false);
-                }
+                return;
             }
+            TouchPoint touchPoint = e.TargetTouches[0];
 
-            await using (var context = _tempContext.CreateBatch())
+            var clientX = touchPoint.ClientX;
+            var clientY = touchPoint.ClientY;
+
+
+            if (_tool == "pencil")
             {
-                await context.ClearRectAsync(0, 0, _position.Width, _position.Height);
+                mousex = clientX - canvasx;
+                mousey = clientY - canvasy;
+
+                Console.WriteLine($"MouseMoveCanvasAsync clientX = {clientX} -- clientY = {clientY}");
+                Console.WriteLine($"MouseMoveCanvasAsync last_mousex = {last_mousex} -- last_mousey = {last_mousey} start_mousex = {start_mousex} start_mousey = {start_mousey}");
+
+                _globalAlpha = 1;
+                _lineCap = LineCap.Round;
+                _lineJoin = LineJoin.Round;
+
+                DrawPoint drawPoint = GetDrawPoint();
+                _points.Add(drawPoint);
+                await DrawHelper.DrawLine(_activeContext, drawPoint, _position.Width, _position.Height, false);
+
+                last_mousex = mousex;
+                last_mousey = mousey;
             }
+            else if (_tool == "marker")
+            {
+                mousex = clientX - canvasx;
+                mousey = clientY - canvasy;
 
-            last_mousex = 0;
-            last_mousey = 0;
+                _globalAlpha = 0.1;
+                _lineCap = LineCap.Round;
+                _lineJoin = LineJoin.Round;
+                DrawPoint drawPoint = GetDrawPoint();
+                _points.Add(drawPoint);
+                await DrawHelper.DrawLine(_activeContext, drawPoint, _position.Width, _position.Height, false);
 
-            _drawPointList.DrawPoints = _points;
-            _reDrawAllPoints.Add(_drawPointList);
-            _playAllPoints.Add(_drawPointList);
-            _points = null;
+                last_mousex = mousex;
+                last_mousey = mousey;
+            }
+            else if (_tool == "eraser")
+            {
+                mousex = clientX - canvasx;
+                mousey = clientY - canvasy;
 
-            //TouchPoint touchPoint = e.TargetTouches[e.TargetTouches.Length - 1];
+                _globalAlpha = 1;
+                _lineCap = LineCap.Round;
+                _lineJoin = LineJoin.Round;
+                _lineColor = "white";
+                DrawPoint drawPoint = GetDrawPoint();
 
-            //var clientX = touchPoint.ClientX;
-            //var clientY = touchPoint.ClientY;
+                _points.Add(drawPoint);
+                await DrawHelper.DrawLine(_activeContext, drawPoint, _position.Width, _position.Height, false);
 
-            //render_required = false;
-            //if (!mousedown)
-            //{
-            //    return;
-            //}
-            //mousex = clientX - canvasx;
-            //mousey = clientY - canvasy;
-            ////await DrawCanvasAsync(mousex, mousey, last_mousex, last_mousey, clr);
+                last_mousex = mousex;
+                last_mousey = mousey;
+            }
+            else if (_tool == "line")
+            {
+                last_mousex = clientX - canvasx;
+                last_mousey = clientY - canvasy;
 
-            //last_mousex = mousex;
-            //last_mousey = mousey;
+                _globalAlpha = 1;
+                _lineCap = LineCap.Round;
+                _lineJoin = LineJoin.Round;
+                DrawPoint drawPoint = GetDrawPoint();
+
+                await DrawHelper.DrawLine(_activeContext, drawPoint, _position.Width, _position.Height, true);
+            }
+            else if (_tool == "arrow")
+            {
+                last_mousex = clientX - canvasx;
+                last_mousey = clientY - canvasy;
+
+                _globalAlpha = 1;
+                _lineCap = LineCap.Round;
+                _lineJoin = LineJoin.Round;
+                DrawPoint drawPoint = GetDrawPoint();
+
+                await DrawHelper.DrawArrow(_activeContext, drawPoint, _position.Width, _position.Height, true);
+            }
+            else if (_tool == "rectangle")
+            {
+                last_mousex = clientX - canvasx;
+                last_mousey = clientY - canvasy;
+
+                _globalAlpha = 1;
+                _lineCap = LineCap.Square;
+                _lineJoin = LineJoin.Bevel;
+                DrawPoint drawPoint = GetDrawPoint();
+
+                await DrawHelper.DrawRectangle(_activeContext, drawPoint, _position.Width, _position.Height, true);
+            }
         }
 
 
